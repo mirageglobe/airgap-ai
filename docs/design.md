@@ -113,6 +113,33 @@ each step ends with a done test it can pass by itself.
 * [ ] `[demo]` the demo script, run twice end to end; record the video; build the deck; write the sponsor explanation (2026-10-26)
 * [ ] `[submit]` declare pre existing components, check for committed secrets, submit on HackOS (2026-10-27)
 
+## acceptance tests
+
+three test cases for ari. names are guesses (toyd, toyd.conf), swap in whatever the toy target really uses.
+
+1. stopped service (happy path)
+   * inject: kill toyd
+   * expect: explorer flags it within a cycle, investigator cites the health + process rows, fixer picks restart-service
+   * done-test: health endpoint 200 within 10s
+   * pass: feed shows announce, apply, result in order. finding resolved. report shows before/after. clean cycles before the fault give no finding
+2. bad fix, undo, retry, escalate
+   * inject: corrupt toyd.conf and also the known-good backup, so restore-config applies but cant pass its done-test
+   * expect: fixer picks restore-config, done-test fails, verifier undoes, finding goes back to the investigator once with the failure as evidence, second try fails, escalate
+   * pass: undo restores exact bytes (check the hash). exactly 2 attempts, never 3. finding ends unresolved with evidence rows. report lists it under left alone
+3. fault not in the catalogue
+   * inject: make toyd leak memory till health slows, nothing in the catalogue matches
+   * expect: no match or bad json, engine escalates. model never gets a veto (both models said act when it should escalate on 18 oct)
+   * pass: nothing outside the catalogue runs (check log.jsonl). escalation note cites the rows. report lists it as left alone
+
+for all 3: every model line has the `[ ARI : nightshift ]` tag, nothing written outside the data folder, `--cycles N` stops on its own.
+
+if time gets tight cut the clean cycle check in 1 first, never 3. its the one that proves the guardrail holds when the model is wrong.
+
+assumptions made while building, to confirm:
+
+* "nothing written outside the data folder" means ari's own files (feed, logs, findings); repairs write only to the paths their catalogue entry declares, since restore-config has to write toyd.conf.
+* for these tests to behave as written: restore-config's precondition checks the backup exists, not its hash (a hash check would block it before any attempt), and restart-service matches only "process missing" (so a leaking but running toyd matches nothing).
+
 ## submission
 
 one submission per team on HackOS, sent by the primary contact; it can be updated until 2026-10-27 23:45 utc. the team roster locks when the first submission is created. source: HackOS resources, "Submission Form Preview" and "Cursor: Sponsor Overview".
