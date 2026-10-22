@@ -1,0 +1,4 @@
+.env
+bin/
+.claude/
+.DS_Store
