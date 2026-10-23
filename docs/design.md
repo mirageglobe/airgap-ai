@@ -1,6 +1,6 @@
 # ari: design
 
-status: running on a Debian 13 server with Zetaris in the loop; acceptance tests 1 to 3 pass end to end under the air gap. Nightshift not wired yet. Open Agent Hackathon 2026, track 03 (reasoning architecture), team of two. build window 2026-10-22 00:00 to 2026-10-27 23:45 utc.
+status: running on a Debian 13 server with Zetaris in the loop; acceptance tests 1 to 3 pass end to end under the air gap. Nightshift wired (headless runtime, NVIDIA lane, Nemotron) and passing all three. Open Agent Hackathon 2026, track 03 (reasoning architecture), team of two. build window 2026-10-22 00:00 to 2026-10-27 23:45 utc.
 
 ## pitch
 

@@ -15,6 +15,8 @@ real runs of the three acceptance scenarios, recorded on the server with Zetaris
 | `badfix` | config and its known good copy corrupted | restore-config failed its done test, undone, re planned contract, failed again, undone, escalated |
 | `leak` | memory leak slows health | no catalogue entry, escalated, no command ran |
 
+`nightshift/` holds the three scenarios with Meterless Nightshift as the fixer's model (Nemotron 3.5 Lightning through Nightshift's NVIDIA lane, reached on the server's own localhost through a tunnel): right picks on `stopped` and `badfix` (both attempts), and on `leak` a wrong pick that Scout refused.
+
 `model/` holds the same three scenarios with a local model as the fixer (gemma4 e2b on Ollama, on the server, behind the air gap; labelled `ollama`, standing in for Nightshift). it picked right on `stopped` and `badfix`; on `leak` it picked `restore-config` for a slow service, and Scout refused the contract (`scope.mismatch`) so nothing ran.
 
 `casts/` holds terminal recordings of the three runs with their real timing, for the video: `asciinema play samples/casts/badfix.cast`.
