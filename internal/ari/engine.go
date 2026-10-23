@@ -344,8 +344,8 @@ func (e *Engine) handle(symptom string, rows []int) {
 		modelReason := reason
 		profile := ""
 		if mf, ok := e.fixer.(ModelFixer); ok {
-			e.event(Event{Event: "model.call", Finding: f.ID, Detail: fmt.Sprintf("requested %s, served by %s", mf.Model.Name, mf.Model.Served)})
-			e.say("fixer %s: asked %s through %s, served by %s", f.ID, mf.Model.Name, l.Label(), mf.Model.Served)
+			e.event(Event{Event: "model.call", Finding: f.ID, Detail: fmt.Sprintf("requested %s, served by %s, receipt %s", mf.Model.Name, mf.Model.Served, mf.Model.Receipt)})
+			e.say("fixer %s: asked %s through %s, served by %s (receipt %s)", f.ID, mf.Model.Name, l.Label(), mf.Model.Served, mf.Model.Receipt)
 		}
 		if isModel {
 			e.sayAs("ARI : "+l.Label(), "%s picked %q: %s", f.ID, name, reason)

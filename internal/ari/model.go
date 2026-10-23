@@ -24,6 +24,7 @@ type Model struct {
 	Reasoning string
 	Client    *http.Client
 	Served    string // model id the runtime reported for the last call
+	Receipt   string // Nightshift's compute receipt id for the last call
 }
 
 // Complete sends one system and one user message and returns the reply text.
@@ -72,7 +73,11 @@ func (m *Model) Complete(ctx context.Context, system, user string) (string, erro
 		return "", fmt.Errorf("model: %s: %s", resp.Status, truncate(string(raw), 200))
 	}
 	var out struct {
-		Model   string `json:"model"`
+		Model     string `json:"model"`
+		Meterless struct {
+			ReceiptID   string `json:"receipt_id"`
+			RoutedModel string `json:"routed_model"`
+		} `json:"meterless"`
 		Choices []struct {
 			Message struct {
 				Content string `json:"content"`
@@ -85,7 +90,10 @@ func (m *Model) Complete(ctx context.Context, system, user string) (string, erro
 	if len(out.Choices) == 0 {
 		return "", errors.New("model: no choices in response")
 	}
-	m.Served = out.Model
+	m.Served, m.Receipt = out.Model, out.Meterless.ReceiptID
+	if out.Meterless.RoutedModel != "" {
+		m.Served = out.Meterless.RoutedModel
+	}
 	return out.Choices[0].Message.Content, nil
 }
 
