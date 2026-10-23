@@ -1,0 +1,33 @@
+# ari preflight 2026-10-23T13:29:14Z
+
+* PASS data folder writable
+* PASS no route out (1.1.1.1:443, 8.8.8.8:53, 9.9.9.9:443)
+* PASS model endpoint answers
+* PASS zetaris answers SELECT 1
+2026-10-23T13:29:23Z [ ARI ] started: run 20261023T132914Z, pid 70822, target /var/lib/ari/target, data /var/lib/ari/data; stop with ari stop or by creating /var/lib/ari/data/STOP
+2026-10-23T13:29:28Z [ ARI ] finding f1: health_failing (rows 11,12)
+2026-10-23T13:29:34Z [ ARI : ollama ] f1 picked "restore-config": health_failing is handled by restore-config
+2026-10-23T13:29:34Z [ ARI ] scout contract c-20261023T132934-001 for f1: intent toyd.health_failing, confidence 0.90, risk low
+2026-10-23T13:29:34Z [ ARI ] announce restore-config for f1: see the ollama line
+2026-10-23T13:29:34Z [ ARI ] apply restore-config
+2026-10-23T13:29:44Z [ ARI ] result restore-config failed, undoing
+2026-10-23T13:29:44Z [ ARI ] undo restore-config done
+2026-10-23T13:29:51Z [ ARI : ollama ] f1 picked "restore-config": health_failing is handled by restore-config
+2026-10-23T13:29:51Z [ ARI ] scout contract c-20261023T132951-002 for f1: intent toyd.health_failing, confidence 0.90, risk low
+2026-10-23T13:29:51Z [ ARI ] announce restore-config for f1: see the ollama line
+2026-10-23T13:29:51Z [ ARI ] apply restore-config
+2026-10-23T13:30:01Z [ ARI ] result restore-config failed, undoing
+2026-10-23T13:30:01Z [ ARI ] undo restore-config done
+2026-10-23T13:30:01Z [ ARI ] escalate f1: done test failed 2 times (tried restore-config) (rows 11,12,13,14)
+2026-10-23T13:30:07Z [ ARI ] finished after 12 cycles
+
+ari report
+
+fixed:
+  none
+
+left alone:
+  f1 health_failing: done test failed 2 times (tried restore-config) (cycle 6, run 20261023T132914Z)
+    evidence: row 11 process alive=true pid=70792; row 12 health latency_ms=0 status=500; row 13 done_test entry=restore-config finding=f1 passed=false; row 14 done_test entry=restore-config finding=f1 passed=false
+    scout:  c-20261023T132934-001 risk low for restore-config
+    scout:  c-20261023T132951-002 risk low for restore-config

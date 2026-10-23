@@ -1,0 +1,22 @@
+# ari preflight 2026-10-23T13:30:09Z
+
+* PASS data folder writable
+* PASS no route out (1.1.1.1:443, 8.8.8.8:53, 9.9.9.9:443)
+* PASS model endpoint answers
+* PASS zetaris answers SELECT 1
+2026-10-23T13:30:19Z [ ARI ] started: run 20261023T133009Z, pid 71607, target /var/lib/ari/target, data /var/lib/ari/data; stop with ari stop or by creating /var/lib/ari/data/STOP
+2026-10-23T13:30:24Z [ ARI ] finding f1: health_slow (rows 11,12)
+2026-10-23T13:30:30Z [ ARI : ollama ] f1 picked "restore-config": health_slow indicates a potential configuration issue.
+2026-10-23T13:30:30Z [ ARI ] scout contract c-20261023T133030-001 for f1: intent toyd.health_slow, confidence 0.00, risk high (scope.mismatch)
+2026-10-23T13:30:30Z [ ARI ] escalate f1: scout refused: scope.mismatch (rows 11,12)
+2026-10-23T13:30:48Z [ ARI ] finished after 12 cycles
+
+ari report
+
+fixed:
+  none
+
+left alone:
+  f1 health_slow: scout refused: scope.mismatch (cycle 6, run 20261023T133009Z)
+    evidence: row 11 process alive=true pid=71574; row 12 health latency_ms=391 status=200
+    scout:  c-20261023T133030-001 risk high (scope.mismatch)
