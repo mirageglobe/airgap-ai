@@ -280,6 +280,26 @@ func TestRowWindow(t *testing.T) {
 	}
 }
 
+// Evidence that cannot be read escalates before the fixer is asked.
+func TestEvidenceErrorEscalates(t *testing.T) {
+	r := newRig(t)
+	r.mod = func(c *Config) { c.Evidence = failingEvidence{} }
+	r.run(RuleFixer{}, 12, func() { r.signal(syscall.SIGKILL) })
+	f := r.onlyFinding()
+	if f.Status != "unresolved" || f.Attempts != 0 || !strings.Contains(f.Reason, "evidence error") {
+		t.Fatalf("finding = %+v, want escalated with an evidence error", f)
+	}
+	if n := r.execCount(""); n != 0 {
+		t.Errorf("%d commands ran without evidence, want none", n)
+	}
+}
+
+type failingEvidence struct{}
+
+func (failingEvidence) Rows(*Finding) ([]Row, error) {
+	return nil, fmt.Errorf("zetaris unreachable")
+}
+
 type pickFixer string
 
 func (p pickFixer) Pick(Cause, *Catalogue) (string, string, error) {

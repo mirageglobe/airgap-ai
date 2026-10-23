@@ -40,6 +40,13 @@ type Config struct {
 	FixBudget      int // fixes per hour
 	Feed           io.Writer
 	AfterCycle     func(cycle int)
+	Evidence       Evidence // nil reads the engine's recent rows
+}
+
+// Evidence gives the investigator the rows behind a finding. Zetaris SQL
+// plugs in here; the default is the engine's own recent rows.
+type Evidence interface {
+	Rows(f *Finding) ([]Row, error)
 }
 
 type Row struct {
@@ -94,6 +101,7 @@ type Engine struct {
 	cfg       Config
 	cat       *Catalogue
 	fixer     Fixer
+	evidence  Evidence
 	client    *http.Client
 	log       *os.File
 	feed      *os.File
@@ -144,6 +152,10 @@ func New(cfg Config, cat *Catalogue, fixer Fixer) (*Engine, error) {
 		client:    &http.Client{Timeout: 2 * time.Second},
 		keepRows:  keepRows,
 		escalated: map[string]bool{},
+	}
+	e.evidence = cfg.Evidence
+	if e.evidence == nil {
+		e.evidence = recentRows{e}
 	}
 	for _, f := range []struct {
 		dst  **os.File
@@ -271,7 +283,11 @@ func (e *Engine) handle(symptom string, rows []int) {
 
 	var tried []string
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
-		cause := e.investigate(f)
+		cause, err := e.investigate(f)
+		if err != nil {
+			e.escalate(f, "evidence error: "+err.Error())
+			return
+		}
 		name, reason, err := e.fixer.Pick(cause, e.cat)
 		l, isModel := e.fixer.(labeled)
 		// Model words only ever appear on tagged lines.
@@ -317,23 +333,40 @@ func (e *Engine) handle(symptom string, rows []int) {
 	e.escalate(f, fmt.Sprintf("done test failed %d times (tried %s)", maxAttempts, strings.Join(tried, ", ")))
 }
 
-func (e *Engine) investigate(f *Finding) Cause {
-	parts := make([]string, 0, len(f.Evidence))
-	for _, id := range f.Evidence {
-		if r, ok := e.row(id); ok {
-			parts = append(parts, describeRow(r))
-		} else {
-			parts = append(parts, fmt.Sprintf("row %d (see log.jsonl)", id))
-		}
+func (e *Engine) investigate(f *Finding) (Cause, error) {
+	rows, err := e.evidence.Rows(f)
+	if err != nil {
+		return Cause{}, err
+	}
+	parts := make([]string, 0, len(rows))
+	ids := make([]int, 0, len(rows))
+	for _, r := range rows {
+		parts = append(parts, describeRow(r))
+		ids = append(ids, r.ID)
 	}
 	c := Cause{
 		Finding:  f.ID,
 		Symptom:  f.Symptom,
 		Summary:  f.Symptom + ": " + strings.Join(parts, "; "),
-		Evidence: append([]int(nil), f.Evidence...),
+		Evidence: ids,
 	}
 	e.event(Event{Event: "investigate", Finding: f.ID, Detail: c.Summary, Rows: c.Evidence})
-	return c
+	return c, nil
+}
+
+// recentRows is the default Evidence: the finding's rows from memory.
+type recentRows struct{ e *Engine }
+
+func (r recentRows) Rows(f *Finding) ([]Row, error) {
+	out := make([]Row, 0, len(f.Evidence))
+	for _, id := range f.Evidence {
+		row, ok := r.e.row(id)
+		if !ok {
+			row = Row{ID: id, Kind: "expired", Data: map[string]any{"see": "log.jsonl"}}
+		}
+		out = append(out, row)
+	}
+	return out, nil
 }
 
 // gate decides whether a picked repair may run. The fixer has no say here.
