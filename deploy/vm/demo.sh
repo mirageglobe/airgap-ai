@@ -5,9 +5,13 @@
 #   demo.sh stopped   Jimmy's test 1: toyd is killed
 #   demo.sh badfix    test 2: config and its known good copy are corrupted
 #   demo.sh leak      test 3: a memory leak no catalogue entry handles
+#
+# Extra arguments go to ari run, e.g. a model:
+#   demo.sh stopped -model-url http://127.0.0.1:11434/v1 -model gemma4:e2b -model-label ollama
 set -eu
 
-SCENARIO=${1:?usage: demo.sh stopped|badfix|leak}
+SCENARIO=${1:?usage: demo.sh stopped|badfix|leak [ari run flags]}
+shift
 CYCLES=${CYCLES:-15}
 T=/var/lib/ari/target
 D=/var/lib/ari/data
@@ -52,7 +56,7 @@ systemd-run --quiet --wait --pipe --collect --unit "ari-demo-$SCENARIO" \
 	-p ProtectHome=yes -p PrivateTmp=yes -p KillMode=process \
 	"$BIN/ari" run -target "$T" -data "$D" -toyd "$BIN/toyd" \
 	-catalogue /opt/ari/catalogue/toyd.json -health "http://127.0.0.1:$PORT/health" \
-	-cycles "$CYCLES" -interval 1s || rc=$?
+	-cycles "$CYCLES" -interval 1s "$@" || rc=$?
 kill $INJECT 2>/dev/null || true
 echo
 runuser -u ari -- "$BIN/ari" report -data "$D"
