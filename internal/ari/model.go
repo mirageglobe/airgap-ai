@@ -23,6 +23,7 @@ type Model struct {
 	// off on runtimes that think by default.
 	Reasoning string
 	Client    *http.Client
+	Served    string // model id the runtime reported for the last call
 }
 
 // Complete sends one system and one user message and returns the reply text.
@@ -71,6 +72,7 @@ func (m *Model) Complete(ctx context.Context, system, user string) (string, erro
 		return "", fmt.Errorf("model: %s: %s", resp.Status, truncate(string(raw), 200))
 	}
 	var out struct {
+		Model   string `json:"model"`
 		Choices []struct {
 			Message struct {
 				Content string `json:"content"`
@@ -83,6 +85,7 @@ func (m *Model) Complete(ctx context.Context, system, user string) (string, erro
 	if len(out.Choices) == 0 {
 		return "", errors.New("model: no choices in response")
 	}
+	m.Served = out.Model
 	return out.Choices[0].Message.Content, nil
 }
 

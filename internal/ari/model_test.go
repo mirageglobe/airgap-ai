@@ -46,6 +46,16 @@ func TestModelFixerPickIsTagged(t *testing.T) {
 		t.Fatalf("finding = %+v, want resolved by restart-service", f)
 	}
 	r.assertModelWordsTagged("MARKER")
+	calls := r.eventsFor("model.call", f.ID)
+	if len(calls) != 1 || calls[0].Agent != "fixer" || !strings.Contains(calls[0].Detail, "requested meterless/auto") {
+		t.Errorf("model.call events = %+v", calls)
+	}
+	for _, ev := range r.events() {
+		if ev.Agent == "" {
+			t.Errorf("event %s has no agent", ev.Event)
+			break
+		}
+	}
 	if got := m.header.Get("Authorization"); got != "Bearer test-token" {
 		t.Errorf("Authorization = %q", got)
 	}

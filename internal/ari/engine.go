@@ -86,6 +86,7 @@ type Event struct {
 	Time     time.Time `json:"ts"`
 	Run      string    `json:"run,omitempty"`
 	Cycle    int       `json:"cycle"`
+	Agent    string    `json:"agent,omitempty"`
 	Event    string    `json:"event"`
 	Finding  string    `json:"finding,omitempty"`
 	Entry    string    `json:"entry,omitempty"`
@@ -342,6 +343,10 @@ func (e *Engine) handle(symptom string, rows []int) {
 		}
 		modelReason := reason
 		profile := ""
+		if mf, ok := e.fixer.(ModelFixer); ok {
+			e.event(Event{Event: "model.call", Finding: f.ID, Detail: fmt.Sprintf("requested %s, served by %s", mf.Model.Name, mf.Model.Served)})
+			e.say("fixer %s: asked %s through %s, served by %s", f.ID, mf.Model.Name, l.Label(), mf.Model.Served)
+		}
 		if isModel {
 			e.sayAs("ARI : "+l.Label(), "%s picked %q: %s", f.ID, name, reason)
 			reason = "see the " + l.Label() + " line"
@@ -422,6 +427,9 @@ func (e *Engine) investigate(f *Finding, tried []string) (Cause, error) {
 		Evidence: ids,
 	}
 	e.event(Event{Event: "investigate", Finding: f.ID, Detail: c.Summary, Rows: c.Evidence})
+	if len(fs) > 0 {
+		e.say("investigator %s: %s", f.ID, strings.Join(fs, "; "))
+	}
 	return c, nil
 }
 
@@ -616,8 +624,21 @@ func (e *Engine) row(id int) (Row, bool) {
 	return e.rows[i], true
 }
 
+// eventAgent names the role that produced each kind of event, so the log
+// reads as a trace of who did what.
+var eventAgent = map[string]string{
+	"row": "explorer", "finding": "explorer", "sink_error": "explorer",
+	"investigate":     "investigator",
+	"model.call":      "fixer",
+	"contract.issued": "scout", "contract.refused": "scout",
+	"contract.verified": "verifier", "exec": "verifier", "resolved": "verifier", "escalate": "verifier",
+}
+
 func (e *Engine) event(ev Event) {
 	ev.Time, ev.Run, ev.Cycle = time.Now().UTC(), e.cfg.RunID, e.cycle
+	if ev.Agent == "" {
+		ev.Agent = eventAgent[ev.Event]
+	}
 	e.writeJSON(e.log, ev)
 }
 

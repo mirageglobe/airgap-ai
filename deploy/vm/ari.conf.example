@@ -11,6 +11,6 @@ ZETARIS_PASSWORD=CHANGE_ME
 
 # optional: let a model pick the repair (Meterless Nightshift, OpenAI compatible).
 # also add the model host to IPAddressAllow= in ari.service.
-# METERLESS_BASE_URL=http://NIGHTSHIFT_HOST:8088/v1
-# METERLESS_RUNTIME_TOKEN=CHANGE_ME
-# METERLESS_MODEL=meterless/auto
+# METERLESS_BASE_URL=http://127.0.0.1:8088/v1   (Nightshift through nightshift-tunnel.service)
+# METERLESS_RUNTIME_TOKEN=CHANGE_ME             (the runtime's proxy-token)
+# METERLESS_MODEL=nvidia/nvidia/nemotron-3.5-lightning-30b-a3b   (pin a Nemotron lane; meterless/auto may route elsewhere)
