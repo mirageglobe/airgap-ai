@@ -1,0 +1,8 @@
+{"version": 2, "width": 160, "height": 40, "timestamp": 1792762778, "env": {"SHELL": "/bin/bash", "TERM": null}}
+[10.222826, "o", "# ari preflight 2026-10-23T13:39:39Z\r\n\r\n* PASS data folder writable\r\n* PASS no route out (1.1.1.1:443, 8.8.8.8:53, 9.9.9.9:443)\r\n* PASS zetaris answers SELECT 1\r\n"]
+[10.223587, "o", "2026-10-23T13:39:48Z [ ARI ] started: run 20261023T133939Z, pid 78192, target /var/lib/ari/target, data /var/lib/ari/data; stop with ari stop or by creating /var/lib/ari/data/STOP\r\n"]
+[15.630159, "o", "2026-10-23T13:39:53Z [ ARI ] finding f1: health_slow (rows 11,12)\r\n"]
+[15.793956, "o", "2026-10-23T13:39:53Z [ ARI ] escalate f1: no catalogue entry picked: nothing handles health_slow (rows 11,12)\r\n"]
+[32.974156, "o", "2026-10-23T13:40:11Z [ ARI ] finished after 12 cycles\r\n"]
+[32.981064, "o", "\r\n"]
+[32.987217, "o", "ari report\r\n\r\nfixed:\r\n  none\r\n\r\nleft alone:\r\n  f1 health_slow: no catalogue entry picked: nothing handles health_slow (cycle 6, run 20261023T133939Z)\r\n    evidence: row 11 process alive=true pid=78180; row 12 health latency_ms=391 status=200\r\n"]

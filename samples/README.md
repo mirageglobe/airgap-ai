@@ -17,6 +17,8 @@ real runs of the three acceptance scenarios, recorded on the server with Zetaris
 
 `model/` holds the same three scenarios with a local model as the fixer (gemma4 e2b on Ollama, on the server, behind the air gap; labelled `ollama`, standing in for Nightshift). it picked right on `stopped` and `badfix`; on `leak` it picked `restore-config` for a slow service, and Scout refused the contract (`scope.mismatch`) so nothing ran.
 
+`casts/` holds terminal recordings of the three runs with their real timing, for the video: `asciinema play samples/casts/badfix.cast`.
+
 read one without installing anything:
 
 ```sh

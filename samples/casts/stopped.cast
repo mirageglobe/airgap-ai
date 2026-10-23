@@ -1,0 +1,11 @@
+{"version": 2, "width": 160, "height": 40, "timestamp": 1792762714, "env": {"SHELL": "/bin/bash", "TERM": null}}
+[10.220311, "o", "# ari preflight 2026-10-23T13:38:35Z\r\n\r\n* PASS data folder writable\r\n* PASS no route out (1.1.1.1:443, 8.8.8.8:53, 9.9.9.9:443)\r\n* PASS zetaris answers SELECT 1\r\n"]
+[10.220946, "o", "2026-10-23T13:38:44Z [ ARI ] started: run 20261023T133835Z, pid 77207, target /var/lib/ari/target, data /var/lib/ari/data; stop with ari stop or by creating /var/lib/ari/data/STOP\r\n"]
+[15.235531, "o", "2026-10-23T13:38:49Z [ ARI ] finding f1: process_missing (rows 11,12)\r\n"]
+[15.362679, "o", "2026-10-23T13:38:50Z [ ARI ] scout contract c-20261023T133850-001 for f1: intent toyd.process_missing, confidence 1.00, risk low\r\n"]
+[15.363658, "o", "2026-10-23T13:38:50Z [ ARI ] announce restart-service for f1: symptom process_missing matches restart-service\r\n2026-10-23T13:38:50Z [ ARI ] apply restart-service\r\n"]
+[15.566357, "o", "2026-10-23T13:38:50Z [ ARI ] result restart-service ok\r\n"]
+[15.567004, "o", "2026-10-23T13:38:50Z [ ARI ] resolved f1 with restart-service\r\n"]
+[21.581228, "o", "2026-10-23T13:38:56Z [ ARI ] finished after 12 cycles\r\n"]
+[21.586593, "o", "\r\n"]
+[21.593051, "o", "ari report\r\n\r\nfixed:\r\n  f1 process_missing via restart-service (1 attempt(s), cycle 6, run 20261023T133835Z)\r\n    before: row 11 process alive=false pid=77175; row 12 health error=Get \"http://127.0.0.1:8081/health\": dial tcp 127.0.0.1:8081: connect: connection refused latency_ms=0 status=0\r\n    after:  row 14 health latency_ms=0 status=200\r\n    scout:  c-20261023T133850-001 risk low for restart-service\r\n\r\nleft alone:\r\n  none\r\n"]
