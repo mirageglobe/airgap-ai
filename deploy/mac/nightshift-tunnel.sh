@@ -1,5 +1,7 @@
 #!/bin/sh
-# Run on the Mac that runs Meterless Nightshift. It makes Nightshift answer on
+# Alternative to deploy/vm/nightshift-tunnel.service (which the demo uses: the
+# server dials the Nightshift box). Use this one when Nightshift runs on a Mac
+# the server cannot reach: run it on that Mac. It makes Nightshift answer on
 # the server's own 127.0.0.1:8088, so ari reaches it without any route out of
 # the server: the air gap stays IPAddressAllow=localhost.
 #
