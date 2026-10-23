@@ -1,0 +1,37 @@
+# ari preflight 2026-10-23T15:21:23Z
+
+* PASS data folder writable
+* PASS no route out (1.1.1.1:443, 8.8.8.8:53, 9.9.9.9:443)
+* PASS model endpoint answers
+* PASS zetaris answers SELECT 1
+2026-10-23T15:21:32Z [ ARI ] started: run 20261023T152123Z, pid 25903, target /var/lib/ari/target, data /var/lib/ari/data; stop with ari stop or by creating /var/lib/ari/data/STOP
+2026-10-23T15:21:37Z [ ARI ] finding f1: health_failing (rows 11,12)
+2026-10-23T15:21:37Z [ ARI ] investigator f1: health status 500 now (row 12), 200 in the 3 cycles before (rows 6,8,10)
+2026-10-23T15:21:38Z [ ARI ] fixer f1: asked meterless/auto through nightshift, served by nvidia/meta/muse-glimmer-30b (receipt rcpt_req_cy4ap6yq)
+2026-10-23T15:21:38Z [ ARI : nightshift ] f1 picked "restore-config": finding is health_failing and restore-config handles health_failing
+2026-10-23T15:21:38Z [ ARI ] scout contract c-20261023T152138-001 for f1: intent toyd.health_failing, confidence 0.90, risk low
+2026-10-23T15:21:38Z [ ARI ] announce restore-config for f1: see the nightshift line
+2026-10-23T15:21:38Z [ ARI ] apply restore-config
+2026-10-23T15:21:48Z [ ARI ] result restore-config failed, undoing
+2026-10-23T15:21:48Z [ ARI ] undo restore-config done
+2026-10-23T15:21:49Z [ ARI ] investigator f1: restore-config failed its done test (row 13); health status 500 now (row 12), 200 in the 3 cycles before (rows 6,8,10); already tried and failed: restore-config
+2026-10-23T15:21:57Z [ ARI ] fixer f1: asked meterless/auto through nightshift, served by nvidia/meta/muse-glimmer-30b (receipt rcpt_req_20gnd3h4)
+2026-10-23T15:21:57Z [ ARI : nightshift ] f1 picked "restore-config": finding is health_failing and restore-config is the only catalogue entry that handles health_failing so retry is allowed
+2026-10-23T15:21:57Z [ ARI ] scout contract c-20261023T152157-002 for f1: intent toyd.health_failing, confidence 0.90, risk low
+2026-10-23T15:21:57Z [ ARI ] announce restore-config for f1: see the nightshift line
+2026-10-23T15:21:57Z [ ARI ] apply restore-config
+2026-10-23T15:22:07Z [ ARI ] result restore-config failed, undoing
+2026-10-23T15:22:07Z [ ARI ] undo restore-config done
+2026-10-23T15:22:07Z [ ARI ] escalate f1: done test failed 2 times (tried restore-config) (rows 11,12,13,14)
+2026-10-23T15:22:13Z [ ARI ] finished after 12 cycles
+
+ari report
+
+fixed:
+  none
+
+left alone:
+  f1 health_failing: done test failed 2 times (tried restore-config) (cycle 6, run 20261023T152123Z)
+    evidence: row 11 process alive=true pid=25872; row 12 health latency_ms=0 status=500; row 13 done_test entry=restore-config finding=f1 passed=false; row 14 done_test entry=restore-config finding=f1 passed=false
+    scout:  c-20261023T152138-001 risk low for restore-config
+    scout:  c-20261023T152157-002 risk low for restore-config
