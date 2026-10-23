@@ -99,7 +99,7 @@ func (m *Model) Complete(ctx context.Context, system, user string) (string, erro
 
 const fixerPrompt = `You pick one repair for a fault on an offline machine.
 You only pick from the catalogue below; you never invent a repair and you do not decide whether to act.
-If an entry already failed, prefer another entry for the same finding; pick it again only if it is the only one.
+This may be the one allowed retry after a failed repair. If another entry handles the same finding, pick that one; if the failed entry is the only one for this finding, pick it again (the verifier undoes it if it fails).
 Reply with JSON only, no other text: {"entry": "<catalogue name, or empty if none fits>", "reason": "<one line>"}`
 
 // BadReply is a model reply that is not the JSON asked for. Reply is model
