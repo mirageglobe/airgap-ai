@@ -53,6 +53,7 @@ func run(args []string) {
 	modelURL := fs.String("model-url", os.Getenv("METERLESS_BASE_URL"), "OpenAI-compatible base url; empty uses the rule fixer")
 	modelName := fs.String("model", envOr("METERLESS_MODEL", "meterless/auto"), "model or routing mode")
 	modelLabel := fs.String("model-label", "nightshift", "feed tag for model lines")
+	modelReasoning := fs.String("model-reasoning", os.Getenv("ARI_MODEL_REASONING"), "reasoning_effort to send, e.g. none; empty sends nothing")
 	evidenceDSN := fs.String("evidence-dsn", os.Getenv("ARI_EVIDENCE_DSN"), "postgres url of the evidence db; empty keeps rows in memory")
 	zetarisURL := fs.String("zetaris-url", os.Getenv("ZETARIS_BASE_URL"), "Zetaris UI origin; empty reads evidence from memory")
 	zetarisUser := fs.String("zetaris-user", envOr("ZETARIS_USERNAME", "admin@zetaris.com"), "Zetaris user")
@@ -67,10 +68,11 @@ func run(args []string) {
 	var fixer ari.Fixer = ari.RuleFixer{}
 	if *modelURL != "" {
 		m := &ari.Model{
-			BaseURL: *modelURL,
-			Token:   os.Getenv("METERLESS_RUNTIME_TOKEN"),
-			Name:    *modelName,
-			Label:   *modelLabel,
+			BaseURL:   *modelURL,
+			Token:     os.Getenv("METERLESS_RUNTIME_TOKEN"),
+			Name:      *modelName,
+			Label:     *modelLabel,
+			Reasoning: *modelReasoning,
 		}
 		fixer = ari.ModelFixer{Model: m}
 		checks = append(checks, ari.ModelAnswers(m))

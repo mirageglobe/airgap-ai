@@ -54,6 +54,9 @@ func TestModelFixerPickIsTagged(t *testing.T) {
 	if m.body["model"] != "meterless/auto" {
 		t.Errorf("model = %v", m.body["model"])
 	}
+	if _, sent := m.body["reasoning_effort"]; sent {
+		t.Error("reasoning_effort sent without being set")
+	}
 }
 
 // Bad JSON is a fixer error in engine words; the raw reply shows only tagged.

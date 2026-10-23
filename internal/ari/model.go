@@ -19,12 +19,15 @@ type Model struct {
 	Token   string
 	Name    string // model or routing mode, e.g. meterless/auto
 	Label   string // feed tag for model words, e.g. nightshift
-	Client  *http.Client
+	// Reasoning is sent as reasoning_effort when set; "none" turns thinking
+	// off on runtimes that think by default.
+	Reasoning string
+	Client    *http.Client
 }
 
 // Complete sends one system and one user message and returns the reply text.
 func (m *Model) Complete(ctx context.Context, system, user string) (string, error) {
-	body, err := json.Marshal(map[string]any{
+	req := map[string]any{
 		"model": m.Name,
 		"messages": []map[string]string{
 			{"role": "system", "content": system},
@@ -32,26 +35,30 @@ func (m *Model) Complete(ctx context.Context, system, user string) (string, erro
 		},
 		"temperature": 0,
 		"max_tokens":  300,
-	})
+	}
+	if m.Reasoning != "" {
+		req["reasoning_effort"] = m.Reasoning
+	}
+	body, err := json.Marshal(req)
 	if err != nil {
 		return "", err
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, strings.TrimRight(m.BaseURL, "/")+"/chat/completions", bytes.NewReader(body))
+	hreq, err := http.NewRequestWithContext(ctx, http.MethodPost, strings.TrimRight(m.BaseURL, "/")+"/chat/completions", bytes.NewReader(body))
 	if err != nil {
 		return "", err
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+m.Token)
+	hreq.Header.Set("Content-Type", "application/json")
+	hreq.Header.Set("Authorization", "Bearer "+m.Token)
 	// Nightshift runtime contract; other endpoints ignore these.
-	req.Header.Set("meterless-app", "ari")
-	req.Header.Set("meterless-scope", "user")
+	hreq.Header.Set("meterless-app", "ari")
+	hreq.Header.Set("meterless-scope", "user")
 
 	client := m.Client
 	if client == nil {
 		// Cold model loads can take minutes; short timeouts read as outages.
 		client = &http.Client{Timeout: 180 * time.Second}
 	}
-	resp, err := client.Do(req)
+	resp, err := client.Do(hreq)
 	if err != nil {
 		return "", err
 	}
