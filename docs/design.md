@@ -110,8 +110,8 @@ each step ends with a done test it can pass by itself.
 * [x] `[ari]` verifier on the real stack: gate, apply, done test, undo, one retry, escalate; test: an entry with no undo is rejected, and a repair whose done test is forced to fail is undone and retried once (2026-10-25)
 * [x] `[ari]` reporter and `ari report` (2026-10-25)
 * [ ] `[cli]` `ari status`, `ari watch`, `ari stop`, `--cycles N` done (2026-10-23); sample mode open (2026-10-25)
-* [ ] `[repo]` one setup command, readme, `.env.example`, sample inputs and outputs, clean setup tested from scratch (2026-10-26)
-* [ ] `[demo]` the demo script, run twice end to end; record the video; build the deck; write the sponsor explanation (2026-10-26)
+* [x] `[repo]` one setup command (`deploy/vm/setup.sh`), readme, config example (`deploy/vm/ari.conf.example`, as `.env.example` is blocked here), sample runs, fresh clone builds and passes (2026-10-23)
+* [ ] `[demo]` demo script run end to end many times, terminal recordings, deck and sponsor explanation done (2026-10-23); narrated video open
 * [ ] `[submit]` declare pre existing components, check for committed secrets, submit on HackOS (2026-10-27)
 
 ## acceptance tests

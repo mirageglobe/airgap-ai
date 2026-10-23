@@ -16,7 +16,7 @@ track: 03, reasoning architecture.
 
 **Meterless Scout Intent** is implemented in go from the published spec, and every repair goes through it. it builds its intent registry from the catalogue, guards the fixer's pick (unknown entry, entry for the wrong symptom, shell or url fragments in a model's reason, hourly budget spent), routes it to a tool plan, and emits an HMAC signed execution contract with a 5 minute TTL and exactly one capability. the verifier refuses anything without a valid contract: bad signature, expired, high risk, or an entry outside the contract's capabilities. a retry after a failed fix gets a re planned contract with the first as its parent. the feature test plants ten decisions and checks each is allowed with the right capability or refused with the right flag.
 
-**Meterless Nightshift** is the model runtime the fixer calls when a model is configured (OpenAI compatible `/v1/chat/completions`, bearer token, `meterless-app` and `meterless-scope` headers). the model only picks from the catalogue and gives a one line reason; every line of model words in the feed is tagged `[ ARI : nightshift ]`. status: the client and its tests are done against a fake endpoint; Nightshift itself only ships for mac, windows and DGX, so it is not yet running next to the server.
+**Meterless Nightshift** is the model runtime the fixer calls when a model is configured (OpenAI compatible `/v1/chat/completions`, bearer token, `meterless-app` and `meterless-scope` headers). the model only picks from the catalogue and gives a one line reason; every line of model words in the feed is tagged `[ ARI : nightshift ]`. status: the client is tested for real on the server with a local model behind the same OpenAI compatible API (gemma4 e2b on Ollama, about 10 seconds a pick): right picks on the stopped service and the bad config, and on the leak a wrong pick that Scout refused (`samples/model/`). Nightshift itself only ships for mac, windows and DGX; `deploy/mac/nightshift-tunnel.sh` makes it answer on the server's own localhost so the air gap holds. [update once Nightshift runs]
 
 **Cursor**: (to fill: how Cursor was used during development.)
 
@@ -36,6 +36,9 @@ track: 03, reasoning architecture.
 8. future enhancements: more catalogue entries per service; the model wording reports; H-MEM for incidents across runs; signed catalogues
 
 ## video, about three minutes
+
+footage: `samples/casts/*.cast` are terminal recordings of the three runs with real timing (`asciinema play`).
+
 
 1. 0:00 the problem in one sentence; the server has no route out (preflight env.md, `IPAddressDeny=any`)
 2. 0:20 the login banner and `ari status`
