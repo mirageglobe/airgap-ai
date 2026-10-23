@@ -39,8 +39,12 @@ inject() {
 	esac
 }
 inject &
+INJECT=$!
+# If ari exits before cycle 5 (a failed preflight), the injector must not wait forever.
+trap 'kill $INJECT 2>/dev/null || true' EXIT
 
 # Same sandbox and air gap as ari.service.
+rc=0
 systemd-run --quiet --wait --pipe --collect --unit "ari-demo-$SCENARIO" \
 	-p User=ari -p Group=ari -p EnvironmentFile=/etc/ari/ari.conf \
 	-p IPAddressDeny=any -p IPAddressAllow=localhost \
@@ -48,7 +52,8 @@ systemd-run --quiet --wait --pipe --collect --unit "ari-demo-$SCENARIO" \
 	-p ProtectHome=yes -p PrivateTmp=yes -p KillMode=process \
 	"$BIN/ari" run -target "$T" -data "$D" -toyd "$BIN/toyd" \
 	-catalogue /opt/ari/catalogue/toyd.json -health "http://127.0.0.1:$PORT/health" \
-	-cycles "$CYCLES" -interval 1s
-wait
+	-cycles "$CYCLES" -interval 1s || rc=$?
+kill $INJECT 2>/dev/null || true
 echo
 runuser -u ari -- "$BIN/ari" report -data "$D"
+exit $rc
