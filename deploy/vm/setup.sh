@@ -85,4 +85,6 @@ echo "== service and banner"
 install -m 644 "$HERE/ari.service" /etc/systemd/system/ari.service
 install -m 755 "$HERE/motd.sh" /etc/update-motd.d/90-ari
 systemctl daemon-reload
+# Start on boot too; a stop flag still keeps it stopped.
+systemctl enable ari >/dev/null 2>&1
 echo "done: start with systemctl start ari; watch with ari watch -data /var/lib/ari/data"
