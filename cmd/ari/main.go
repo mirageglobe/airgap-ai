@@ -37,14 +37,26 @@ func run(args []string) {
 	fs.IntVar(&cfg.Cycles, "cycles", 0, "stop after N cycles (0 runs until stopped)")
 	fs.DurationVar(&cfg.Interval, "interval", 5*time.Second, "time between cycles")
 	catalogue := fs.String("catalogue", "catalogue/toyd.json", "catalogue file")
+	modelURL := fs.String("model-url", os.Getenv("METERLESS_BASE_URL"), "OpenAI-compatible base url; empty uses the rule fixer")
+	modelName := fs.String("model", envOr("METERLESS_MODEL", "meterless/auto"), "model or routing mode")
+	modelLabel := fs.String("model-label", "nightshift", "feed tag for model lines")
 	fs.Parse(args)
 
 	cat, err := ari.LoadCatalogue(*catalogue)
 	if err != nil {
 		fail(err)
 	}
+	var fixer ari.Fixer = ari.RuleFixer{}
+	if *modelURL != "" {
+		fixer = ari.ModelFixer{Model: &ari.Model{
+			BaseURL: *modelURL,
+			Token:   os.Getenv("METERLESS_RUNTIME_TOKEN"),
+			Name:    *modelName,
+			Label:   *modelLabel,
+		}}
+	}
 	cfg.Feed = os.Stdout
-	e, err := ari.New(cfg, cat, ari.RuleFixer{})
+	e, err := ari.New(cfg, cat, fixer)
 	if err != nil {
 		fail(err)
 	}
@@ -71,6 +83,13 @@ func report(args []string) {
 func usage() {
 	fmt.Fprintln(os.Stderr, "usage: ari run|report [flags]")
 	os.Exit(2)
+}
+
+func envOr(key, def string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return def
 }
 
 func fail(err error) {

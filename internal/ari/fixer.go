@@ -6,6 +6,12 @@ type Fixer interface {
 	Pick(c Cause, cat *Catalogue) (entry, reason string, err error)
 }
 
+// labeled is implemented by fixers whose reasons are model words; the feed
+// tags those lines "[ ARI : <label> ]".
+type labeled interface {
+	Label() string
+}
+
 // RuleFixer matches the cause's symptom to a catalogue entry. It is the
 // fallback when the model picks wrong, and the fixer until the model is wired.
 type RuleFixer struct{}

@@ -252,6 +252,15 @@ func (e *Engine) handle(symptom string, rows []int) {
 			e.escalate(f, "fixer error: "+err.Error())
 			return
 		}
+		// Model words only ever appear on tagged lines.
+		if l, ok := e.fixer.(labeled); ok {
+			e.sayAs("ARI : "+l.Label(), "%s picked %q: %s", f.ID, name, reason)
+			reason = "see the " + l.Label() + " line"
+			if name == "" {
+				e.escalate(f, "fixer picked no catalogue entry")
+				return
+			}
+		}
 		if name == "" {
 			e.escalate(f, reason)
 			return
@@ -432,7 +441,11 @@ func (e *Engine) writeJSON(w io.Writer, v any) {
 }
 
 func (e *Engine) say(format string, args ...any) {
-	line := fmt.Sprintf("%s [ ARI ] %s\n", time.Now().UTC().Format(time.RFC3339), fmt.Sprintf(format, args...))
+	e.sayAs("ARI", format, args...)
+}
+
+func (e *Engine) sayAs(tag, format string, args ...any) {
+	line := fmt.Sprintf("%s [ %s ] %s\n", time.Now().UTC().Format(time.RFC3339), tag, fmt.Sprintf(format, args...))
 	if _, err := io.WriteString(e.feed, line); err != nil && e.err == nil {
 		e.err = err
 	}

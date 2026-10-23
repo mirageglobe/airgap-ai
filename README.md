@@ -32,4 +32,15 @@ bin/ari run -target TARGET_DIR -data DATA_DIR -toyd bin/toyd \
 bin/ari report -data DATA_DIR
 ```
 
+with no model settings ari uses the rule based fixer. to let a model pick the repair, point it at any OpenAI compatible endpoint (Meterless Nightshift in the product):
+
+```sh
+export METERLESS_BASE_URL=http://127.0.0.1:8088/v1   # or another compatible endpoint while building
+export METERLESS_RUNTIME_TOKEN=...                    # never commit it
+export METERLESS_MODEL=meterless/auto
+bin/ari run ...                                       # same flags as above
+```
+
+the model only picks from the catalogue; the gate still decides. every line of model words in the feed is tagged `[ ARI : nightshift ]`.
+
 `TARGET_DIR` holds `toyd.conf` (`port=PORT` and `status=ok`) and its known good copy `toyd.conf.good`. ari writes only `log.jsonl`, `feed.log` and `findings.jsonl` in `DATA_DIR`.

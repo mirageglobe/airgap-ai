@@ -98,7 +98,8 @@ the loop: explorer, investigator, fixer, verifier. a failed done test returns to
 
 each step ends with a done test it can pass by itself.
 
-* [x] `[poc]` verifier loop with a rule based fixer and the toy target, no Zetaris or Nightshift; test: a broken target is fixed, a forced done test failure is undone and escalated (2026-10-22). acceptance tests 1 to 3 pass in `internal/ari`; still open until the stack is wired: Zetaris rows as evidence and the `[ ARI : nightshift ]` tag on model lines
+* [x] `[poc]` verifier loop with a rule based fixer and the toy target, no Zetaris or Nightshift; test: a broken target is fixed, a forced done test failure is undone and escalated (2026-10-22). acceptance tests 1 to 3 pass in `internal/ari`; still open until the stack is wired: Zetaris rows as evidence
+* [x] `[ari]` model fixer over an OpenAI compatible endpoint (Nightshift in the product); bad json, no pick or an unreachable model escalates with nothing run; model words only on `[ ARI : nightshift ]` lines; tested against a fake endpoint (2026-10-23)
 * [ ] `[env]` install Zetaris (`./verify.sh` passes) and Nightshift (a local lane answers); then cut the network and repeat both checks; if either fails offline, rethink the air gap claim (2026-10-22)
 * [ ] `[env]` reach Nightshift and Zetaris from a container on an `--internal` network (2026-10-22)
 * [ ] `[ari]` the container image: debian slim, tools, non root, read only root, the toy target; test: the target runs and a write outside the data folder fails (2026-10-23)
