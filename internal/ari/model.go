@@ -88,6 +88,7 @@ func (m *Model) Complete(ctx context.Context, system, user string) (string, erro
 
 const fixerPrompt = `You pick one repair for a fault on an offline machine.
 You only pick from the catalogue below; you never invent a repair and you do not decide whether to act.
+If an entry already failed, prefer another entry for the same finding; pick it again only if it is the only one.
 Reply with JSON only, no other text: {"entry": "<catalogue name, or empty if none fits>", "reason": "<one line>"}`
 
 // BadReply is a model reply that is not the JSON asked for. Reply is model
@@ -106,7 +107,14 @@ type ModelFixer struct {
 
 func (f ModelFixer) Pick(c Cause, cat *Catalogue) (string, string, error) {
 	var b strings.Builder
-	fmt.Fprintf(&b, "finding: %s\nevidence: %s\n\ncatalogue:\n", c.Symptom, c.Summary)
+	fmt.Fprintf(&b, "finding: %s\n", c.Symptom)
+	for _, f := range c.Facts {
+		fmt.Fprintf(&b, "fact: %s\n", f)
+	}
+	if len(c.Tried) > 0 {
+		fmt.Fprintf(&b, "already tried and failed: %s\n", strings.Join(c.Tried, ", "))
+	}
+	b.WriteString("\ncatalogue:\n")
 	for _, n := range cat.order {
 		fmt.Fprintf(&b, "- %s: handles %s\n", n, cat.entries[n].Symptom)
 	}

@@ -1,5 +1,7 @@
 package ari
 
+import "slices"
+
 // Fixer picks a catalogue entry for a cause. It never decides whether to act;
 // the verifier's gate does.
 type Fixer interface {
@@ -16,10 +18,17 @@ type labeled interface {
 // when no model is set.
 type RuleFixer struct{}
 
+// On a retry it prefers an entry that has not failed yet; when the only
+// entry for the symptom already failed, it gets its one retry.
 func (RuleFixer) Pick(c Cause, cat *Catalogue) (string, string, error) {
 	m := cat.BySymptom(c.Symptom)
 	if len(m) == 0 {
 		return "", "nothing handles " + c.Symptom, nil
 	}
-	return m[0].Name, "symptom " + c.Symptom + " matches " + m[0].Name, nil
+	for _, e := range m {
+		if !slices.Contains(c.Tried, e.Name) {
+			return e.Name, "symptom " + c.Symptom + " matches " + e.Name, nil
+		}
+	}
+	return m[0].Name, "only " + m[0].Name + " handles " + c.Symptom + "; retrying it once", nil
 }

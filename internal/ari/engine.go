@@ -76,6 +76,8 @@ type Finding struct {
 type Cause struct {
 	Finding  string
 	Symptom  string
+	Facts    []string // what the investigator concluded, each citing rows
+	Tried    []string // entries that already failed their done test
 	Summary  string
 	Evidence []int
 }
@@ -322,7 +324,7 @@ func (e *Engine) handle(symptom string, rows []int) {
 	var tried []string
 	var parent string
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
-		cause, err := e.investigate(f)
+		cause, err := e.investigate(f, tried)
 		if err != nil {
 			e.escalateFor(f, "evidence error: "+err.Error(), e.cfg.RetryAfter)
 			return
@@ -395,7 +397,7 @@ func (e *Engine) handle(symptom string, rows []int) {
 	e.escalate(f, fmt.Sprintf("done test failed %d times (tried %s)", maxAttempts, strings.Join(tried, ", ")))
 }
 
-func (e *Engine) investigate(f *Finding) (Cause, error) {
+func (e *Engine) investigate(f *Finding, tried []string) (Cause, error) {
 	rows, err := e.evidence.Rows(f)
 	if err != nil {
 		return Cause{}, err
@@ -406,10 +408,17 @@ func (e *Engine) investigate(f *Finding) (Cause, error) {
 		parts = append(parts, describeRow(r))
 		ids = append(ids, r.ID)
 	}
+	fs := facts(f, rows, tried)
+	summary := f.Symptom
+	if len(fs) > 0 {
+		summary += ": " + strings.Join(fs, "; ")
+	}
 	c := Cause{
 		Finding:  f.ID,
 		Symptom:  f.Symptom,
-		Summary:  f.Symptom + ": " + strings.Join(parts, "; "),
+		Facts:    fs,
+		Tried:    append([]string(nil), tried...),
+		Summary:  summary + " | rows: " + strings.Join(parts, "; "),
 		Evidence: ids,
 	}
 	e.event(Event{Event: "investigate", Finding: f.ID, Detail: c.Summary, Rows: c.Evidence})
