@@ -294,6 +294,44 @@ func TestEvidenceErrorEscalates(t *testing.T) {
 	}
 }
 
+// The stop flag halts a run at once and keeps the next run from starting.
+func TestStopFlag(t *testing.T) {
+	r := newRig(t)
+	var cycles []int
+	r.mod = func(c *Config) {
+		c.Cycles = 0
+		c.Interval = 2 * time.Second
+		c.AfterCycle = func(n int) {
+			cycles = append(cycles, n)
+			if n == 2 {
+				if err := RequestStop(r.data, "test"); err != nil {
+					t.Error(err)
+				}
+			}
+		}
+	}
+	start := time.Now()
+	r.run(RuleFixer{}, 0, func() {})
+	if len(cycles) != 2 {
+		t.Errorf("ran %d cycles after the stop flag at cycle 2", len(cycles))
+	}
+	if d := time.Since(start); d > 4*time.Second {
+		t.Errorf("stop took %v, want it to cut the sleep short", d)
+	}
+	if s, err := ReadState(r.data); err != nil || s.State != "stopped" {
+		t.Fatalf("state = %+v, %v; want stopped", s, err)
+	}
+	cycles = nil
+	r.run(RuleFixer{}, 0, func() {})
+	if len(cycles) != 0 {
+		t.Errorf("a stopped ari ran %d cycles on restart", len(cycles))
+	}
+	out, err := Status(r.data)
+	if err != nil || !strings.Contains(out, "stop flag: set") {
+		t.Errorf("status = %q, %v", out, err)
+	}
+}
+
 type failingEvidence struct{}
 
 func (failingEvidence) Rows(*Finding) ([]Row, error) {
@@ -510,7 +548,7 @@ func (r *rig) assertOnlyOwnFiles() {
 	if err != nil {
 		r.t.Fatal(err)
 	}
-	own := map[string]bool{"log.jsonl": true, "feed.log": true, "findings.jsonl": true}
+	own := map[string]bool{"log.jsonl": true, "feed.log": true, "findings.jsonl": true, "state.json": true, StopFile: true, "env.md": true}
 	for _, e := range entries {
 		if !own[e.Name()] {
 			r.t.Errorf("unexpected file in data folder: %s", e.Name())

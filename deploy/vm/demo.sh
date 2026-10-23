@@ -14,11 +14,7 @@ D=/var/lib/ari/data
 BIN=/opt/ari/bin
 PORT=8081
 
-. /etc/ari/evidence.conf
-export ARI_EVIDENCE_DSN="postgres://ari:${ARI_PW}@127.0.0.1:5433/evidence?sslmode=disable"
-export ZETARIS_BASE_URL=${ZETARIS_BASE_URL:-http://127.0.0.1:3000}
-export ZETARIS_PASSWORD=${ZETARIS_PASSWORD:-Zetaris1@}
-
+systemctl stop ari 2>/dev/null || true
 pkill -x toyd || true
 rm -rf "$T" "$D"
 mkdir -p "$T" "$D"
@@ -42,7 +38,13 @@ inject() {
 }
 inject &
 
-runuser -u ari -p -- "$BIN/ari" run -target "$T" -data "$D" -toyd "$BIN/toyd" \
+# Same sandbox and air gap as ari.service.
+systemd-run --quiet --wait --pipe --collect --unit "ari-demo-$SCENARIO" \
+	-p User=ari -p Group=ari -p EnvironmentFile=/etc/ari/ari.conf \
+	-p IPAddressDeny=any -p IPAddressAllow=localhost \
+	-p NoNewPrivileges=yes -p ProtectSystem=strict -p ReadWritePaths=/var/lib/ari \
+	-p ProtectHome=yes -p PrivateTmp=yes -p KillMode=process \
+	"$BIN/ari" run -target "$T" -data "$D" -toyd "$BIN/toyd" \
 	-catalogue /opt/ari/catalogue/toyd.json -health "http://127.0.0.1:$PORT/health" \
 	-cycles "$CYCLES" -interval 1s
 wait

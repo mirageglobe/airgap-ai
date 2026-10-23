@@ -116,6 +116,8 @@ type Engine struct {
 	fixes     []time.Time
 	baseline  []time.Duration
 	cycle     int
+	lastFix   *FixNote
+	leftAlone int
 	err       error
 }
 
@@ -187,18 +189,35 @@ func (e *Engine) Close() error {
 // Run explores once per interval and handles each new finding to the end
 // before the next cycle.
 func (e *Engine) Run() error {
+	stop := filepath.Join(e.cfg.DataDir, StopFile)
+	if e.stopRequested() {
+		e.say("not starting: stop flag %s is set; remove it to let ari start", stop)
+		e.writeState("stopped")
+		return e.err
+	}
+	e.say("started: run %s, pid %d, target %s, data %s; stop with ari stop or by creating %s",
+		e.cfg.RunID, os.Getpid(), e.cfg.TargetDir, e.cfg.DataDir, stop)
 	for e.cycle = 1; e.cfg.Cycles <= 0 || e.cycle <= e.cfg.Cycles; e.cycle++ {
+		if e.stopRequested() {
+			e.say("stopped by %s", stop)
+			e.writeState("stopped")
+			return e.err
+		}
 		o := e.explore()
 		if s := e.classify(o); s != "" && !e.escalated[s] {
 			e.handle(s, o.rows)
 		}
+		e.writeState("running")
 		if e.cfg.AfterCycle != nil {
 			e.cfg.AfterCycle(e.cycle)
 		}
 		if e.cfg.Cycles <= 0 || e.cycle < e.cfg.Cycles {
-			time.Sleep(e.cfg.Interval)
+			e.sleep(e.cfg.Interval)
 		}
 	}
+	e.cycle--
+	e.say("finished after %d cycles", e.cycle)
+	e.writeState("finished")
 	return e.err
 }
 
@@ -328,6 +347,7 @@ func (e *Engine) handle(symptom string, rows []int) {
 			f.After = []int{after.ID}
 			e.event(Event{Event: "resolved", Finding: f.ID, Entry: name, Rows: f.After})
 			e.say("resolved %s with %s", f.ID, name)
+			e.lastFix = &FixNote{Finding: f.ID, Entry: name, Status: "resolved", At: time.Now().UTC()}
 			e.record(f)
 			return
 		case fixUndoFailed:
@@ -382,6 +402,8 @@ func (e *Engine) gate(f *Finding, c Cause, entry Entry, ok bool) string {
 		return "picked entry is not in the catalogue"
 	case entry.Symptom != c.Symptom:
 		return fmt.Sprintf("%s handles %s, not %s", entry.Name, entry.Symptom, c.Symptom)
+	case e.stopRequested():
+		return "stop requested"
 	case e.budgetSpent():
 		return "hourly fix budget spent"
 	case e.exec(f, entry.Name, "precondition", entry.Precondition) != 0:
@@ -456,6 +478,10 @@ func (e *Engine) escalate(f *Finding, why string) {
 	e.escalated[f.Symptom] = true
 	e.event(Event{Event: "escalate", Finding: f.ID, Detail: why, Rows: f.Evidence})
 	e.say("escalate %s: %s (rows %s)", f.ID, why, joinInts(f.Evidence))
+	e.leftAlone++
+	if f.Entry != "" {
+		e.lastFix = &FixNote{Finding: f.ID, Entry: f.Entry, Status: "failed and undone, escalated", At: time.Now().UTC()}
+	}
 	e.record(f)
 }
 

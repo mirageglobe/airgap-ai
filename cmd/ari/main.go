@@ -1,13 +1,20 @@
 // ari looks after a toy service with no internet. Usage:
 //
 //	ari run -target DIR -data DIR -catalogue FILE -toyd PATH -health URL [-cycles N]
+//	ari status -data DIR
+//	ari watch -data DIR
+//	ari stop -data DIR
 //	ari report -data DIR
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	"os"
+	"os/user"
+	"path/filepath"
 	"time"
 
 	"github.com/mirageglobe/airgap-ai/internal/ari"
@@ -22,6 +29,12 @@ func main() {
 		run(os.Args[2:])
 	case "report":
 		report(os.Args[2:])
+	case "status":
+		status(os.Args[2:])
+	case "watch":
+		watch(os.Args[2:])
+	case "stop":
+		stop(os.Args[2:])
 	default:
 		usage()
 	}
@@ -43,20 +56,24 @@ func run(args []string) {
 	evidenceDSN := fs.String("evidence-dsn", os.Getenv("ARI_EVIDENCE_DSN"), "postgres url of the evidence db; empty keeps rows in memory")
 	zetarisURL := fs.String("zetaris-url", os.Getenv("ZETARIS_BASE_URL"), "Zetaris UI origin; empty reads evidence from memory")
 	zetarisUser := fs.String("zetaris-user", envOr("ZETARIS_USERNAME", "admin@zetaris.com"), "Zetaris user")
+	preflight := fs.Bool("preflight", true, "check there is no route out and every dependency answers before starting")
 	fs.Parse(args)
 
 	cat, err := ari.LoadCatalogue(*catalogue)
 	if err != nil {
 		fail(err)
 	}
+	checks := []ari.Check{ari.DataWritable(cfg.DataDir), ari.NoRouteOut(ari.OutsideProbes)}
 	var fixer ari.Fixer = ari.RuleFixer{}
 	if *modelURL != "" {
-		fixer = ari.ModelFixer{Model: &ari.Model{
+		m := &ari.Model{
 			BaseURL: *modelURL,
 			Token:   os.Getenv("METERLESS_RUNTIME_TOKEN"),
 			Name:    *modelName,
 			Label:   *modelLabel,
-		}}
+		}
+		fixer = ari.ModelFixer{Model: m}
+		checks = append(checks, ari.ModelAnswers(m))
 	}
 	if *evidenceDSN != "" {
 		sink, err := ari.NewPostgresSink(*evidenceDSN)
@@ -71,9 +88,15 @@ func run(args []string) {
 			fail(fmt.Errorf("-zetaris-url needs -evidence-dsn: Zetaris reads the rows ari writes there"))
 		}
 		cfg.RunID = time.Now().UTC().Format("20060102T150405Z")
-		cfg.Evidence = ari.ZetarisEvidence{
-			Z:   &ari.Zetaris{BaseURL: *zetarisURL, User: *zetarisUser, Password: os.Getenv("ZETARIS_PASSWORD")},
-			Run: cfg.RunID,
+		z := &ari.Zetaris{BaseURL: *zetarisURL, User: *zetarisUser, Password: os.Getenv("ZETARIS_PASSWORD")}
+		cfg.Evidence = ari.ZetarisEvidence{Z: z, Run: cfg.RunID}
+		checks = append(checks, ari.ZetarisAnswers(z))
+	}
+	if *preflight {
+		out, err := ari.Preflight(cfg.DataDir, checks)
+		fmt.Print(out)
+		if err != nil {
+			fail(err)
 		}
 	}
 	cfg.Feed = os.Stdout
@@ -101,8 +124,61 @@ func report(args []string) {
 	fmt.Print(out)
 }
 
+func dataFlag(name string, args []string) string {
+	fs := flag.NewFlagSet(name, flag.ExitOnError)
+	data := fs.String("data", "data", "folder for ari's own files")
+	fs.Parse(args)
+	return *data
+}
+
+func status(args []string) {
+	out, err := ari.Status(dataFlag("status", args))
+	if err != nil {
+		fail(err)
+	}
+	fmt.Print(out)
+}
+
+func stop(args []string) {
+	data := dataFlag("stop", args)
+	by := "unknown"
+	if u, err := user.Current(); err == nil {
+		by = u.Username
+	}
+	if err := ari.RequestStop(data, by); err != nil {
+		fail(err)
+	}
+	fmt.Printf("stop flag set in %s; ari halts within a second and stays stopped until the flag is removed\n", data)
+}
+
+// watch prints the feed so far, then follows it like tail -f.
+func watch(args []string) {
+	path := filepath.Join(dataFlag("watch", args), "feed.log")
+	f, err := os.Open(path)
+	for err != nil {
+		if !os.IsNotExist(err) {
+			fail(err)
+		}
+		time.Sleep(time.Second)
+		f, err = os.Open(path)
+	}
+	defer f.Close()
+	r := bufio.NewReader(f)
+	for {
+		line, err := r.ReadString('\n')
+		fmt.Print(line)
+		if err == io.EOF {
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+		if err != nil {
+			fail(err)
+		}
+	}
+}
+
 func usage() {
-	fmt.Fprintln(os.Stderr, "usage: ari run|report [flags]")
+	fmt.Fprintln(os.Stderr, "usage: ari run|status|watch|stop|report [flags]")
 	os.Exit(2)
 }
 

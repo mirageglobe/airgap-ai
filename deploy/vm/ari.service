@@ -1,0 +1,31 @@
+[Unit]
+Description=ari: looks after toyd from an approved list of reversible repairs
+Documentation=https://github.com/mirageglobe/airgap-ai
+After=docker.service network.target
+
+[Service]
+User=ari
+Group=ari
+EnvironmentFile=/etc/ari/ari.conf
+ExecStart=/opt/ari/bin/ari run -target /var/lib/ari/target -data /var/lib/ari/data \
+  -toyd /opt/ari/bin/toyd -catalogue /opt/ari/catalogue/toyd.json \
+  -health http://127.0.0.1:8081/health -interval 5s
+# A stop flag exits 0, so ari stays stopped; only a crash restarts it.
+Restart=on-failure
+RestartSec=10
+
+# The air gap: ari and everything it starts reach only this machine.
+# Add the model host with IPAddressAllow= when one is set.
+IPAddressDeny=any
+IPAddressAllow=localhost
+
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/ari
+ProtectHome=yes
+PrivateTmp=yes
+# Stopping ari must not take toyd down with it.
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
