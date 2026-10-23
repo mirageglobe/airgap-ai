@@ -1,0 +1,4 @@
+2026-10-23T13:08:21Z [ ARI ] started: run 20261023T130812Z, pid 57138, target /var/lib/ari/target, data /var/lib/ari/data; stop with ari stop or by creating /var/lib/ari/data/STOP
+2026-10-23T13:08:27Z [ ARI ] finding f1: health_slow (rows 11,12)
+2026-10-23T13:08:27Z [ ARI ] escalate f1: no catalogue entry picked: nothing handles health_slow (rows 11,12)
+2026-10-23T13:08:53Z [ ARI ] finished after 15 cycles

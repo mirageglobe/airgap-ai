@@ -1,0 +1,14 @@
+2026-10-23T13:07:35Z [ ARI ] started: run 20261023T130726Z, pid 56464, target /var/lib/ari/target, data /var/lib/ari/data; stop with ari stop or by creating /var/lib/ari/data/STOP
+2026-10-23T13:07:40Z [ ARI ] finding f1: health_failing (rows 11,12)
+2026-10-23T13:07:40Z [ ARI ] scout contract c-20261023T130740-001 for f1: intent toyd.health_failing, confidence 1.00, risk low
+2026-10-23T13:07:40Z [ ARI ] announce restore-config for f1: symptom health_failing matches restore-config
+2026-10-23T13:07:40Z [ ARI ] apply restore-config
+2026-10-23T13:07:50Z [ ARI ] result restore-config failed, undoing
+2026-10-23T13:07:50Z [ ARI ] undo restore-config done
+2026-10-23T13:07:51Z [ ARI ] scout contract c-20261023T130751-002 for f1: intent toyd.health_failing, confidence 1.00, risk low
+2026-10-23T13:07:51Z [ ARI ] announce restore-config for f1: symptom health_failing matches restore-config
+2026-10-23T13:07:51Z [ ARI ] apply restore-config
+2026-10-23T13:08:01Z [ ARI ] result restore-config failed, undoing
+2026-10-23T13:08:01Z [ ARI ] undo restore-config done
+2026-10-23T13:08:01Z [ ARI ] escalate f1: done test failed 2 times (tried restore-config) (rows 11,12,13,14)
+2026-10-23T13:08:10Z [ ARI ] finished after 15 cycles

@@ -40,6 +40,10 @@ built for the Open Agent Hackathon 2026, track 03 (reasoning architecture). see 
 * `catalogue/toyd.json`: the approved repairs, each with a precondition, done test and undo
 * `deploy/vm`: server setup, the systemd unit, login banner and the demo script
 
+## samples
+
+[`samples/`](samples/README.md) holds real recorded runs of the three scenarios; `go run ./cmd/ari report -data samples/badfix` reads one with nothing else installed.
+
 ## run the tests
 
 needs go 1.27. the acceptance tests in docs/design.md take about a minute; Zetaris is faked.

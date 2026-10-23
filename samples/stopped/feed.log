@@ -1,0 +1,8 @@
+2026-10-23T13:07:09Z [ ARI ] started: run 20261023T130700Z, pid 56030, target /var/lib/ari/target, data /var/lib/ari/data; stop with ari stop or by creating /var/lib/ari/data/STOP
+2026-10-23T13:07:14Z [ ARI ] finding f1: process_missing (rows 11,12)
+2026-10-23T13:07:15Z [ ARI ] scout contract c-20261023T130715-001 for f1: intent toyd.process_missing, confidence 1.00, risk low
+2026-10-23T13:07:15Z [ ARI ] announce restart-service for f1: symptom process_missing matches restart-service
+2026-10-23T13:07:15Z [ ARI ] apply restart-service
+2026-10-23T13:07:15Z [ ARI ] result restart-service ok
+2026-10-23T13:07:15Z [ ARI ] resolved f1 with restart-service
+2026-10-23T13:07:24Z [ ARI ] finished after 15 cycles

@@ -1,0 +1,33 @@
+{"ts":"2026-10-23T13:08:21.685155148Z","run":"20261023T130812Z","cycle":1,"event":"row","row":{"id":1,"cycle":1,"kind":"process","data":{"alive":true,"pid":57108}}}
+{"ts":"2026-10-23T13:08:21.688195763Z","run":"20261023T130812Z","cycle":1,"event":"row","row":{"id":2,"cycle":1,"kind":"health","data":{"latency_ms":0,"status":200}}}
+{"ts":"2026-10-23T13:08:22.689844624Z","run":"20261023T130812Z","cycle":2,"event":"row","row":{"id":3,"cycle":2,"kind":"process","data":{"alive":true,"pid":57108}}}
+{"ts":"2026-10-23T13:08:22.690819677Z","run":"20261023T130812Z","cycle":2,"event":"row","row":{"id":4,"cycle":2,"kind":"health","data":{"latency_ms":0,"status":200}}}
+{"ts":"2026-10-23T13:08:23.692094027Z","run":"20261023T130812Z","cycle":3,"event":"row","row":{"id":5,"cycle":3,"kind":"process","data":{"alive":true,"pid":57108}}}
+{"ts":"2026-10-23T13:08:23.692994507Z","run":"20261023T130812Z","cycle":3,"event":"row","row":{"id":6,"cycle":3,"kind":"health","data":{"latency_ms":0,"status":200}}}
+{"ts":"2026-10-23T13:08:24.694293743Z","run":"20261023T130812Z","cycle":4,"event":"row","row":{"id":7,"cycle":4,"kind":"process","data":{"alive":true,"pid":57108}}}
+{"ts":"2026-10-23T13:08:24.695351278Z","run":"20261023T130812Z","cycle":4,"event":"row","row":{"id":8,"cycle":4,"kind":"health","data":{"latency_ms":0,"status":200}}}
+{"ts":"2026-10-23T13:08:25.696703794Z","run":"20261023T130812Z","cycle":5,"event":"row","row":{"id":9,"cycle":5,"kind":"process","data":{"alive":true,"pid":57108}}}
+{"ts":"2026-10-23T13:08:25.697735257Z","run":"20261023T130812Z","cycle":5,"event":"row","row":{"id":10,"cycle":5,"kind":"health","data":{"latency_ms":0,"status":200}}}
+{"ts":"2026-10-23T13:08:26.698839093Z","run":"20261023T130812Z","cycle":6,"event":"row","row":{"id":11,"cycle":6,"kind":"process","data":{"alive":true,"pid":57108}}}
+{"ts":"2026-10-23T13:08:27.090177899Z","run":"20261023T130812Z","cycle":6,"event":"row","row":{"id":12,"cycle":6,"kind":"health","data":{"latency_ms":390,"status":200}}}
+{"ts":"2026-10-23T13:08:27.090836614Z","run":"20261023T130812Z","cycle":6,"event":"finding","finding":"f1","detail":"health_slow","rows":[11,12]}
+{"ts":"2026-10-23T13:08:27.242653548Z","run":"20261023T130812Z","cycle":6,"event":"investigate","finding":"f1","detail":"health_slow: row 6 health latency_ms=0 status=200; row 8 health latency_ms=0 status=200; row 10 health latency_ms=0 status=200; row 11 process alive=true pid=57108; row 12 health latency_ms=390 status=200","rows":[6,8,10,11,12]}
+{"ts":"2026-10-23T13:08:27.2426839Z","run":"20261023T130812Z","cycle":6,"event":"escalate","finding":"f1","detail":"no catalogue entry picked: nothing handles health_slow","rows":[11,12]}
+{"ts":"2026-10-23T13:08:28.243701381Z","run":"20261023T130812Z","cycle":7,"event":"row","row":{"id":13,"cycle":7,"kind":"process","data":{"alive":true,"pid":57108}}}
+{"ts":"2026-10-23T13:08:29.395547577Z","run":"20261023T130812Z","cycle":7,"event":"row","row":{"id":14,"cycle":7,"kind":"health","data":{"latency_ms":1151,"status":200}}}
+{"ts":"2026-10-23T13:08:30.397313634Z","run":"20261023T130812Z","cycle":8,"event":"row","row":{"id":15,"cycle":8,"kind":"process","data":{"alive":true,"pid":57108}}}
+{"ts":"2026-10-23T13:08:32.399319058Z","run":"20261023T130812Z","cycle":8,"event":"row","row":{"id":16,"cycle":8,"kind":"health","data":{"error":"Get \"http://127.0.0.1:8081/health\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)","latency_ms":2001,"status":0}}}
+{"ts":"2026-10-23T13:08:33.400888896Z","run":"20261023T130812Z","cycle":9,"event":"row","row":{"id":17,"cycle":9,"kind":"process","data":{"alive":true,"pid":57108}}}
+{"ts":"2026-10-23T13:08:35.402998698Z","run":"20261023T130812Z","cycle":9,"event":"row","row":{"id":18,"cycle":9,"kind":"health","data":{"error":"Get \"http://127.0.0.1:8081/health\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)","latency_ms":2001,"status":0}}}
+{"ts":"2026-10-23T13:08:36.40462441Z","run":"20261023T130812Z","cycle":10,"event":"row","row":{"id":19,"cycle":10,"kind":"process","data":{"alive":true,"pid":57108}}}
+{"ts":"2026-10-23T13:08:38.406575174Z","run":"20261023T130812Z","cycle":10,"event":"row","row":{"id":20,"cycle":10,"kind":"health","data":{"error":"Get \"http://127.0.0.1:8081/health\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)","latency_ms":2001,"status":0}}}
+{"ts":"2026-10-23T13:08:39.408023842Z","run":"20261023T130812Z","cycle":11,"event":"row","row":{"id":21,"cycle":11,"kind":"process","data":{"alive":true,"pid":57108}}}
+{"ts":"2026-10-23T13:08:41.409510083Z","run":"20261023T130812Z","cycle":11,"event":"row","row":{"id":22,"cycle":11,"kind":"health","data":{"error":"Get \"http://127.0.0.1:8081/health\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)","latency_ms":2000,"status":0}}}
+{"ts":"2026-10-23T13:08:42.41115763Z","run":"20261023T130812Z","cycle":12,"event":"row","row":{"id":23,"cycle":12,"kind":"process","data":{"alive":true,"pid":57108}}}
+{"ts":"2026-10-23T13:08:44.413412246Z","run":"20261023T130812Z","cycle":12,"event":"row","row":{"id":24,"cycle":12,"kind":"health","data":{"error":"Get \"http://127.0.0.1:8081/health\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)","latency_ms":2001,"status":0}}}
+{"ts":"2026-10-23T13:08:45.414881463Z","run":"20261023T130812Z","cycle":13,"event":"row","row":{"id":25,"cycle":13,"kind":"process","data":{"alive":true,"pid":57108}}}
+{"ts":"2026-10-23T13:08:47.416946855Z","run":"20261023T130812Z","cycle":13,"event":"row","row":{"id":26,"cycle":13,"kind":"health","data":{"error":"Get \"http://127.0.0.1:8081/health\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)","latency_ms":2001,"status":0}}}
+{"ts":"2026-10-23T13:08:48.418564449Z","run":"20261023T130812Z","cycle":14,"event":"row","row":{"id":27,"cycle":14,"kind":"process","data":{"alive":true,"pid":57108}}}
+{"ts":"2026-10-23T13:08:50.419759057Z","run":"20261023T130812Z","cycle":14,"event":"row","row":{"id":28,"cycle":14,"kind":"health","data":{"error":"Get \"http://127.0.0.1:8081/health\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)","latency_ms":2000,"status":0}}}
+{"ts":"2026-10-23T13:08:51.421426959Z","run":"20261023T130812Z","cycle":15,"event":"row","row":{"id":29,"cycle":15,"kind":"process","data":{"alive":true,"pid":57108}}}
+{"ts":"2026-10-23T13:08:53.422594126Z","run":"20261023T130812Z","cycle":15,"event":"row","row":{"id":30,"cycle":15,"kind":"health","data":{"error":"Get \"http://127.0.0.1:8081/health\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)","latency_ms":2000,"status":0}}}

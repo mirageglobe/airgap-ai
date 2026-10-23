@@ -1,0 +1,24 @@
+# ari preflight 2026-10-23T13:07:00Z
+
+* PASS data folder writable
+* PASS no route out (1.1.1.1:443, 8.8.8.8:53, 9.9.9.9:443)
+* PASS zetaris answers SELECT 1
+2026-10-23T13:07:09Z [ ARI ] started: run 20261023T130700Z, pid 56030, target /var/lib/ari/target, data /var/lib/ari/data; stop with ari stop or by creating /var/lib/ari/data/STOP
+2026-10-23T13:07:14Z [ ARI ] finding f1: process_missing (rows 11,12)
+2026-10-23T13:07:15Z [ ARI ] scout contract c-20261023T130715-001 for f1: intent toyd.process_missing, confidence 1.00, risk low
+2026-10-23T13:07:15Z [ ARI ] announce restart-service for f1: symptom process_missing matches restart-service
+2026-10-23T13:07:15Z [ ARI ] apply restart-service
+2026-10-23T13:07:15Z [ ARI ] result restart-service ok
+2026-10-23T13:07:15Z [ ARI ] resolved f1 with restart-service
+2026-10-23T13:07:24Z [ ARI ] finished after 15 cycles
+
+ari report
+
+fixed:
+  f1 process_missing via restart-service (1 attempt(s), cycle 6, run 20261023T130700Z)
+    before: row 11 process alive=false pid=56019; row 12 health error=Get "http://127.0.0.1:8081/health": dial tcp 127.0.0.1:8081: connect: connection refused latency_ms=0 status=0
+    after:  row 14 health latency_ms=0 status=200
+    scout:  c-20261023T130715-001 risk low for restart-service
+
+left alone:
+  none

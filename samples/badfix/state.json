@@ -1,0 +1,1 @@
+{"pid":56464,"run":"20261023T130726Z","state":"finished","cycle":15,"updated":"2026-10-23T13:08:10.151279083Z","last_fix":{"finding":"f1","entry":"restore-config","status":"failed and undone, escalated","at":"2026-10-23T13:08:01.129742994Z"},"left_alone":1}

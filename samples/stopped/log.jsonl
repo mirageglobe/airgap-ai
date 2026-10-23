@@ -1,0 +1,39 @@
+{"ts":"2026-10-23T13:07:09.94602261Z","run":"20261023T130700Z","cycle":1,"event":"row","row":{"id":1,"cycle":1,"kind":"process","data":{"alive":true,"pid":56019}}}
+{"ts":"2026-10-23T13:07:09.948073494Z","run":"20261023T130700Z","cycle":1,"event":"row","row":{"id":2,"cycle":1,"kind":"health","data":{"latency_ms":0,"status":200}}}
+{"ts":"2026-10-23T13:07:10.949449723Z","run":"20261023T130700Z","cycle":2,"event":"row","row":{"id":3,"cycle":2,"kind":"process","data":{"alive":true,"pid":56019}}}
+{"ts":"2026-10-23T13:07:10.95059469Z","run":"20261023T130700Z","cycle":2,"event":"row","row":{"id":4,"cycle":2,"kind":"health","data":{"latency_ms":0,"status":200}}}
+{"ts":"2026-10-23T13:07:11.951965456Z","run":"20261023T130700Z","cycle":3,"event":"row","row":{"id":5,"cycle":3,"kind":"process","data":{"alive":true,"pid":56019}}}
+{"ts":"2026-10-23T13:07:11.952978222Z","run":"20261023T130700Z","cycle":3,"event":"row","row":{"id":6,"cycle":3,"kind":"health","data":{"latency_ms":0,"status":200}}}
+{"ts":"2026-10-23T13:07:12.954473553Z","run":"20261023T130700Z","cycle":4,"event":"row","row":{"id":7,"cycle":4,"kind":"process","data":{"alive":true,"pid":56019}}}
+{"ts":"2026-10-23T13:07:12.955563897Z","run":"20261023T130700Z","cycle":4,"event":"row","row":{"id":8,"cycle":4,"kind":"health","data":{"latency_ms":0,"status":200}}}
+{"ts":"2026-10-23T13:07:13.956791842Z","run":"20261023T130700Z","cycle":5,"event":"row","row":{"id":9,"cycle":5,"kind":"process","data":{"alive":true,"pid":56019}}}
+{"ts":"2026-10-23T13:07:13.957730811Z","run":"20261023T130700Z","cycle":5,"event":"row","row":{"id":10,"cycle":5,"kind":"health","data":{"latency_ms":0,"status":200}}}
+{"ts":"2026-10-23T13:07:14.958411739Z","run":"20261023T130700Z","cycle":6,"event":"row","row":{"id":11,"cycle":6,"kind":"process","data":{"alive":false,"pid":56019}}}
+{"ts":"2026-10-23T13:07:14.959134839Z","run":"20261023T130700Z","cycle":6,"event":"row","row":{"id":12,"cycle":6,"kind":"health","data":{"error":"Get \"http://127.0.0.1:8081/health\": dial tcp 127.0.0.1:8081: connect: connection refused","latency_ms":0,"status":0}}}
+{"ts":"2026-10-23T13:07:14.959416854Z","run":"20261023T130700Z","cycle":6,"event":"finding","finding":"f1","detail":"process_missing","rows":[11,12]}
+{"ts":"2026-10-23T13:07:15.115087242Z","run":"20261023T130700Z","cycle":6,"event":"investigate","finding":"f1","detail":"process_missing: row 6 health latency_ms=0 status=200; row 8 health latency_ms=0 status=200; row 10 health latency_ms=0 status=200; row 11 process alive=false pid=56019; row 12 health error=Get \"http://127.0.0.1:8081/health\": dial tcp 127.0.0.1:8081: connect: connection refused latency_ms=0 status=0","rows":[6,8,10,11,12]}
+{"ts":"2026-10-23T13:07:15.115188141Z","run":"20261023T130700Z","cycle":6,"event":"contract.issued","finding":"f1","contract":{"contractId":"c-20261023T130715-001","traceId":"20261023T130700Z/f1","intent":{"primary":"toyd.process_missing","parameters":{"evidence":"6,8,10,11,12","finding":"f1"},"confidence":1,"alternates":null},"risk":{"level":"low","flags":null},"toolPlan":[{"tool":"restart-service","step":"precondition"},{"tool":"restart-service","step":"apply"},{"tool":"restart-service","step":"health_ok"},{"tool":"restart-service","step":"undo on failure"}],"modelProfile":"rules","scope":{"user":"ari","surface":"verifier","capabilities":["restart-service"]},"issuedAt":"2026-10-23T13:07:15.115122055Z","expiresAt":"2026-10-23T13:12:15.115122055Z","registryVersion":2,"policyPackVersion":"ari-1","signature":"1b3ca9f8dcd6c0782d34f25f634cc32b2141f1cc31b44497d9cb817a8f6188b9","signedBy":"scout"}}
+{"ts":"2026-10-23T13:07:15.115229993Z","run":"20261023T130700Z","cycle":6,"event":"contract.verified","finding":"f1","entry":"restart-service","detail":"c-20261023T130715-001"}
+{"ts":"2026-10-23T13:07:15.116357655Z","run":"20261023T130700Z","cycle":6,"event":"exec","finding":"f1","entry":"restart-service","step":"precondition","detail":"test -f \"/var/lib/ari/target/toyd.conf\"","exit":0}
+{"ts":"2026-10-23T13:07:15.117214937Z","run":"20261023T130700Z","cycle":6,"event":"exec","finding":"f1","entry":"restart-service","step":"apply","detail":"nohup \"/opt/ari/bin/toyd\" -config \"/var/lib/ari/target/toyd.conf\" -pidfile \"/var/lib/ari/target/toyd.pid\" \u003e\u003e\"/var/lib/ari/target/toyd.log\" 2\u003e\u00261 \u0026","exit":0}
+{"ts":"2026-10-23T13:07:15.318445134Z","run":"20261023T130700Z","cycle":6,"event":"row","row":{"id":13,"cycle":6,"kind":"done_test","data":{"entry":"restart-service","finding":"f1","passed":true}}}
+{"ts":"2026-10-23T13:07:15.319317884Z","run":"20261023T130700Z","cycle":6,"event":"row","row":{"id":14,"cycle":6,"kind":"health","data":{"latency_ms":0,"status":200}}}
+{"ts":"2026-10-23T13:07:15.319647725Z","run":"20261023T130700Z","cycle":6,"event":"resolved","finding":"f1","entry":"restart-service","rows":[14]}
+{"ts":"2026-10-23T13:07:16.320682908Z","run":"20261023T130700Z","cycle":7,"event":"row","row":{"id":15,"cycle":7,"kind":"process","data":{"alive":true,"pid":56308}}}
+{"ts":"2026-10-23T13:07:16.321635349Z","run":"20261023T130700Z","cycle":7,"event":"row","row":{"id":16,"cycle":7,"kind":"health","data":{"latency_ms":0,"status":200}}}
+{"ts":"2026-10-23T13:07:17.322872097Z","run":"20261023T130700Z","cycle":8,"event":"row","row":{"id":17,"cycle":8,"kind":"process","data":{"alive":true,"pid":56308}}}
+{"ts":"2026-10-23T13:07:17.323930127Z","run":"20261023T130700Z","cycle":8,"event":"row","row":{"id":18,"cycle":8,"kind":"health","data":{"latency_ms":0,"status":200}}}
+{"ts":"2026-10-23T13:07:18.32538535Z","run":"20261023T130700Z","cycle":9,"event":"row","row":{"id":19,"cycle":9,"kind":"process","data":{"alive":true,"pid":56308}}}
+{"ts":"2026-10-23T13:07:18.326542203Z","run":"20261023T130700Z","cycle":9,"event":"row","row":{"id":20,"cycle":9,"kind":"health","data":{"latency_ms":0,"status":200}}}
+{"ts":"2026-10-23T13:07:19.327988984Z","run":"20261023T130700Z","cycle":10,"event":"row","row":{"id":21,"cycle":10,"kind":"process","data":{"alive":true,"pid":56308}}}
+{"ts":"2026-10-23T13:07:19.328974128Z","run":"20261023T130700Z","cycle":10,"event":"row","row":{"id":22,"cycle":10,"kind":"health","data":{"latency_ms":0,"status":200}}}
+{"ts":"2026-10-23T13:07:20.330365427Z","run":"20261023T130700Z","cycle":11,"event":"row","row":{"id":23,"cycle":11,"kind":"process","data":{"alive":true,"pid":56308}}}
+{"ts":"2026-10-23T13:07:20.331293851Z","run":"20261023T130700Z","cycle":11,"event":"row","row":{"id":24,"cycle":11,"kind":"health","data":{"latency_ms":0,"status":200}}}
+{"ts":"2026-10-23T13:07:21.332649012Z","run":"20261023T130700Z","cycle":12,"event":"row","row":{"id":25,"cycle":12,"kind":"process","data":{"alive":true,"pid":56308}}}
+{"ts":"2026-10-23T13:07:21.333665403Z","run":"20261023T130700Z","cycle":12,"event":"row","row":{"id":26,"cycle":12,"kind":"health","data":{"latency_ms":0,"status":200}}}
+{"ts":"2026-10-23T13:07:22.335086519Z","run":"20261023T130700Z","cycle":13,"event":"row","row":{"id":27,"cycle":13,"kind":"process","data":{"alive":true,"pid":56308}}}
+{"ts":"2026-10-23T13:07:22.336048925Z","run":"20261023T130700Z","cycle":13,"event":"row","row":{"id":28,"cycle":13,"kind":"health","data":{"latency_ms":0,"status":200}}}
+{"ts":"2026-10-23T13:07:23.337449776Z","run":"20261023T130700Z","cycle":14,"event":"row","row":{"id":29,"cycle":14,"kind":"process","data":{"alive":true,"pid":56308}}}
+{"ts":"2026-10-23T13:07:23.338477764Z","run":"20261023T130700Z","cycle":14,"event":"row","row":{"id":30,"cycle":14,"kind":"health","data":{"latency_ms":0,"status":200}}}
+{"ts":"2026-10-23T13:07:24.33997298Z","run":"20261023T130700Z","cycle":15,"event":"row","row":{"id":31,"cycle":15,"kind":"process","data":{"alive":true,"pid":56308}}}
+{"ts":"2026-10-23T13:07:24.340979538Z","run":"20261023T130700Z","cycle":15,"event":"row","row":{"id":32,"cycle":15,"kind":"health","data":{"latency_ms":0,"status":200}}}
