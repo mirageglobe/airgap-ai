@@ -34,7 +34,7 @@ func (m *Model) Complete(ctx context.Context, system, user string) (string, erro
 			{"role": "user", "content": user},
 		},
 		"temperature": 0,
-		"max_tokens":  300,
+		"max_tokens":  1024,
 	}
 	if m.Reasoning != "" {
 		req["reasoning_effort"] = m.Reasoning
