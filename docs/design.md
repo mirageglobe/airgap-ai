@@ -1,6 +1,6 @@
 # ari: design
 
-status: running on a Debian 13 server with Zetaris in the loop; acceptance tests 1 to 3 pass end to end under the air gap. Nightshift wired (headless runtime, NVIDIA lane, Nemotron) and passing all three. Open Agent Hackathon 2026, track 03 (reasoning architecture), team of two. build window 2026-10-22 00:00 to 2026-10-27 23:45 utc.
+status: running on a Debian 13 server with Zetaris in the loop; acceptance tests 1 to 3 pass end to end under the air gap. Nightshift wired (headless runtime, `meterless/auto` routing to NVIDIA cloud models) and passing all three. Open Agent Hackathon 2026, track 03 (reasoning architecture), team of two. build window 2026-10-22 00:00 to 2026-10-27 23:45 utc.
 
 ## pitch
 
@@ -12,7 +12,7 @@ track 03: "turn data, knowledge, memory, and reasoning into reliable decisions a
 
 | rule (required unless noted) | how ari meets it |
 | :--- | :--- |
-| Zetaris integrated, running locally | the evidence store: the investigator agent queries logs, findings, config and the target's health api through Zetaris sql (rest, `localhost:8888`) |
+| Zetaris integrated, running locally | the evidence store: the investigator agent queries logs, findings, config and the target's health api through Zetaris Lightning SQL (the UI proxy's `sql-editor/sqls/run-query` on `127.0.0.1:3000`) |
 | at least one Meterless engine in a working feature | Scout Intent routes a finding to a catalogue repair and checks its risk; proof is a reproducible feature test in go. the official Scout eval harness only loads a js module and tests Meterless's own intent fixtures, so passing it means building the whole spec; out of scope |
 | Meterless Nightshift as the primary ai provider | every model call goes to the Nightshift runtime (openai compatible, `/v1/chat/completions`, bearer token, `meterless-app` and `meterless-scope` headers) on a local model lane |
 | Cursor as the development environment | build in Cursor; keep notes on how it was used for the submission |
@@ -52,7 +52,7 @@ the loop: explorer, investigator, fixer, verifier. a failed done test returns to
 
 | in | out |
 | :--- | :--- |
-| five agents with one critique loop and one retry | more specialists |
+| six roles (explorer, investigator, fixer, Scout, verifier, reporter) in one supervised loop, with one retry | more specialists |
 | a catalogue of pre approved, reversible fixes (a handful) | free form commands or self written fixes |
 | one local model through Nightshift, thinking off, json output | staged autonomy levels |
 | a headless loop until stopped, plus a bounded `--cycles N` demo mode | self scheduling, adaptive cadence |
