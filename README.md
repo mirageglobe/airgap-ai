@@ -57,7 +57,7 @@ go test ./...
 on a Debian 13 server with docker and go 1.27, as root:
 
 1. install Zetaris from the hackathon bundle into `/opt/zetaris-platform` (unzip, `docker login`, `./preflight.sh`, `docker compose pull`, `docker compose up -d`, `./verify.sh`)
-2. build ari and toyd into `/opt/ari/bin`, copy `catalogue/toyd.json` to `/opt/ari/catalogue/`
+2. build ari and toyd as static binaries into `/opt/ari/bin` (`CGO_ENABLED=0 go build -o /opt/ari/bin/ari ./cmd/ari`, same for `./cmd/toyd`), copy `catalogue/toyd.json` to `/opt/ari/catalogue/`
 3. `sh deploy/vm/setup.sh`: creates the evidence db, registers it in Zetaris, writes `/etc/ari/ari.conf`, installs the unit and banner
 4. `systemctl start ari`, then `ari watch -data /var/lib/ari/data`
 
