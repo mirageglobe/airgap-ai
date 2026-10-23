@@ -37,7 +37,8 @@ type Config struct {
 	Cycles         int // 0 runs until stopped
 	Interval       time.Duration
 	BaselineCycles int
-	FixBudget      int // fixes per hour
+	FixBudget      int           // fixes per hour
+	RetryAfter     time.Duration // a finding escalated by an outage is tried again after this
 	Feed           io.Writer
 	AfterCycle     func(cycle int)
 	Evidence       Evidence // nil reads the engine's recent rows
@@ -116,7 +117,7 @@ type Engine struct {
 	nRows     int
 	keepRows  int
 	nFindings int
-	escalated map[string]bool
+	escalated map[string]time.Time // symptom -> muted until; zero = until a clean cycle
 	fixes     []time.Time
 	baseline  []time.Duration
 	cycle     int
@@ -134,6 +135,9 @@ func New(cfg Config, cat *Catalogue, fixer Fixer) (*Engine, error) {
 	}
 	if cfg.Interval == 0 {
 		cfg.Interval = 5 * time.Second
+	}
+	if cfg.RetryAfter == 0 {
+		cfg.RetryAfter = time.Minute
 	}
 	if cfg.RunID == "" {
 		cfg.RunID = time.Now().UTC().Format("20060102T150405Z")
@@ -162,7 +166,7 @@ func New(cfg Config, cat *Catalogue, fixer Fixer) (*Engine, error) {
 		fixer:     fixer,
 		client:    &http.Client{Timeout: 2 * time.Second},
 		keepRows:  keepRows,
-		escalated: map[string]bool{},
+		escalated: map[string]time.Time{},
 	}
 	e.scout = NewScout(cat)
 	e.evidence = cfg.Evidence
@@ -209,7 +213,11 @@ func (e *Engine) Run() error {
 			return e.err
 		}
 		o := e.explore()
-		if s := e.classify(o); s != "" && !e.escalated[s] {
+		switch s := e.classify(o); {
+		case s == "":
+			// A clean cycle: whatever was escalated has cleared.
+			clear(e.escalated)
+		case !e.muted(s):
 			e.handle(s, o.rows)
 		}
 		e.writeState("running")
@@ -316,7 +324,7 @@ func (e *Engine) handle(symptom string, rows []int) {
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
 		cause, err := e.investigate(f)
 		if err != nil {
-			e.escalate(f, "evidence error: "+err.Error())
+			e.escalateFor(f, "evidence error: "+err.Error(), e.cfg.RetryAfter)
 			return
 		}
 		name, reason, err := e.fixer.Pick(cause, e.cat)
@@ -327,7 +335,7 @@ func (e *Engine) handle(symptom string, rows []int) {
 			e.sayAs("ARI : "+l.Label(), "%s replied: %s", f.ID, oneLine(bad.Reply))
 		}
 		if err != nil {
-			e.escalate(f, "fixer error: "+err.Error())
+			e.escalateFor(f, "fixer error: "+err.Error(), e.cfg.RetryAfter)
 			return
 		}
 		modelReason := reason
@@ -496,9 +504,27 @@ func (e *Engine) healthOK() bool {
 	return resp.StatusCode == http.StatusOK
 }
 
+// muted says whether a symptom was escalated and is not to be tried again yet.
+func (e *Engine) muted(symptom string) bool {
+	until, ok := e.escalated[symptom]
+	return ok && (until.IsZero() || time.Now().Before(until))
+}
+
+// escalate leaves the symptom alone until a clean cycle clears it.
 func (e *Engine) escalate(f *Finding, why string) {
+	e.escalateFor(f, why, 0)
+}
+
+// escalateFor mutes the symptom for d only: the cause was an outage (model or
+// evidence unreachable), so it is worth trying again once d has passed.
+func (e *Engine) escalateFor(f *Finding, why string, d time.Duration) {
+	var until time.Time
+	if d > 0 {
+		until = time.Now().Add(d)
+		why += fmt.Sprintf("; trying again after %s", d)
+	}
 	f.Status, f.Reason = "unresolved", why
-	e.escalated[f.Symptom] = true
+	e.escalated[f.Symptom] = until
 	e.event(Event{Event: "escalate", Finding: f.ID, Detail: why, Rows: f.Evidence})
 	e.say("escalate %s: %s (rows %s)", f.ID, why, joinInts(f.Evidence))
 	e.leftAlone++

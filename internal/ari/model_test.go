@@ -8,6 +8,7 @@ import (
 	"strings"
 	"syscall"
 	"testing"
+	"time"
 )
 
 // fakeModel answers every chat completion with reply and records the request.
@@ -66,7 +67,7 @@ func TestModelBadJSONEscalates(t *testing.T) {
 	r.run(m.fixer(), 12, func() { r.signal(syscall.SIGKILL) })
 
 	f := r.onlyFinding()
-	if f.Status != "unresolved" || f.Attempts != 0 || f.Reason != "fixer error: model returned bad json" {
+	if f.Status != "unresolved" || f.Attempts != 0 || !strings.HasPrefix(f.Reason, "fixer error: model returned bad json") {
 		t.Fatalf("finding = %+v, want escalated as a fixer error with no attempt", f)
 	}
 	r.assertModelWordsTagged("MARKER")
@@ -131,6 +132,36 @@ func (r *rig) assertModelWordsTagged(marker string) {
 		if strings.Contains(ev.Detail, marker) {
 			r.t.Errorf("model words in a %s event: %s", ev.Event, ev.Detail)
 		}
+	}
+}
+
+// A model outage is not a dead end: the finding is tried again once the
+// model is back, and resolved.
+func TestModelOutageRetried(t *testing.T) {
+	calls := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		if calls == 1 {
+			http.Error(w, "down", http.StatusBadGateway)
+			return
+		}
+		json.NewEncoder(w).Encode(map[string]any{
+			"choices": []map[string]any{{"message": map[string]string{"role": "assistant", "content": `{"entry":"restart-service","reason":"gone"}`}}},
+		})
+	}))
+	t.Cleanup(srv.Close)
+	r := newRig(t)
+	r.mod = func(c *Config) { c.RetryAfter = 300 * time.Millisecond }
+	r.run(ModelFixer{Model: &Model{BaseURL: srv.URL + "/v1", Name: "x", Label: "nightshift"}}, 14, func() { r.signal(syscall.SIGKILL) })
+
+	var fs []Finding
+	r.lines("findings.jsonl", func(b []byte) {
+		var f Finding
+		json.Unmarshal(b, &f)
+		fs = append(fs, f)
+	})
+	if len(fs) != 2 || fs[0].Status != "unresolved" || !strings.Contains(fs[0].Reason, "trying again") || fs[1].Status != "resolved" {
+		t.Fatalf("findings = %+v, want an outage escalation then a resolved retry", fs)
 	}
 }
 
