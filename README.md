@@ -25,7 +25,7 @@ built for the Open Agent Hackathon 2026, track 03 (reasoning architecture). see 
 * login banner says ari is here, what it may do and how to stop it
 * every fix is announced in the feed before it runs, and again with its result
 * `ari watch` follows the feed, `ari status` shows state, last cycle and last fix
-* `ari stop` (or a `STOP` file in the data folder) halts it within a second, and it stays stopped until the file is removed
+* `ari stop` (or a `STOP` file in the data folder) halts it before its next action, and it stays stopped until the file is removed
 * `log.jsonl`, `feed.log`, `findings.jsonl`, `state.json` and `env.md` are plain files in one folder
 
 ## the air gap

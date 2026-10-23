@@ -35,7 +35,8 @@ type FixNote struct {
 	At      time.Time `json:"at"`
 }
 
-// RequestStop writes the stop flag; a running ari halts within a second.
+// RequestStop writes the stop flag; a running ari halts before its next
+// action (a fix already applying finishes its done test, and undo if needed).
 func RequestStop(dataDir, by string) error {
 	note := fmt.Sprintf("stop requested by %s at %s\n", by, time.Now().UTC().Format(time.RFC3339))
 	return os.WriteFile(filepath.Join(dataDir, StopFile), []byte(note), 0o644)

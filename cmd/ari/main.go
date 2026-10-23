@@ -155,7 +155,7 @@ func stop(args []string) {
 	if err := ari.RequestStop(data, by); err != nil {
 		fail(err)
 	}
-	fmt.Printf("stop flag set in %s; ari halts within a second and stays stopped until the flag is removed\n", data)
+	fmt.Printf("stop flag set in %s; ari halts before its next action and stays stopped until the flag is removed\n", data)
 }
 
 // watch prints the feed so far, then follows it like tail -f.
