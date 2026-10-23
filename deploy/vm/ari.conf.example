@@ -1,0 +1,16 @@
+# /etc/ari/ari.conf: read by ari.service (EnvironmentFile). setup.sh writes
+# the real one with generated passwords; keep it root only (chmod 600).
+
+# evidence db that ari writes and Zetaris reads
+ARI_EVIDENCE_DSN=postgres://ari:CHANGE_ME@127.0.0.1:5433/evidence?sslmode=disable
+
+# Zetaris UI origin and login; the investigator queries evidence through it
+ZETARIS_BASE_URL=http://127.0.0.1:3000
+ZETARIS_USERNAME=admin@zetaris.com
+ZETARIS_PASSWORD=CHANGE_ME
+
+# optional: let a model pick the repair (Meterless Nightshift, OpenAI compatible).
+# also add the model host to IPAddressAllow= in ari.service.
+# METERLESS_BASE_URL=http://NIGHTSHIFT_HOST:8088/v1
+# METERLESS_RUNTIME_TOKEN=CHANGE_ME
+# METERLESS_MODEL=meterless/auto

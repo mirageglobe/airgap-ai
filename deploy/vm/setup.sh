@@ -8,6 +8,7 @@ set -eu
 
 ZETARIS_URL=${ZETARIS_URL:-http://127.0.0.1:3000}
 ZETARIS_USER=${ZETARIS_USER:-admin@zetaris.com}
+# The bundle's published first login; after changing it in the UI, pass the new one.
 ZETARIS_PASSWORD=${ZETARIS_PASSWORD:-Zetaris1@}
 HERE=$(cd "$(dirname "$0")" && pwd)
 
