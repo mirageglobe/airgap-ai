@@ -92,6 +92,11 @@ func run(args []string) {
 		cfg.Evidence = ari.ZetarisEvidence{Z: z, Run: cfg.RunID}
 		checks = append(checks, ari.ZetarisAnswers(z))
 	}
+	// A stopped ari stays stopped: refuse before touching anything else.
+	if stop := filepath.Join(cfg.DataDir, ari.StopFile); fileExists(stop) {
+		fmt.Printf("ari: not starting: stop flag %s is set; remove it to let ari start\n", stop)
+		return
+	}
 	if *preflight {
 		out, err := ari.Preflight(cfg.DataDir, checks)
 		fmt.Print(out)
@@ -180,6 +185,11 @@ func watch(args []string) {
 func usage() {
 	fmt.Fprintln(os.Stderr, "usage: ari run|status|watch|stop|report [flags]")
 	os.Exit(2)
+}
+
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }
 
 func envOr(key, def string) string {
