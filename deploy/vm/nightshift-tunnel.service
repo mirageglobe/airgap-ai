@@ -1,0 +1,18 @@
+[Unit]
+Description=Tunnel Meterless Nightshift to this server's 127.0.0.1:8088 for ari
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# NIGHTSHIFT_HOST=user@host of the box running meterlessd. Its
+# authorized_keys entry for this key is restricted to forwarding 127.0.0.1:8088.
+EnvironmentFile=/etc/ari/nightshift-tunnel.conf
+ExecStart=/usr/bin/ssh -N -i /root/.ssh/nightshift_tunnel -o IdentitiesOnly=yes \
+  -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=3 \
+  -o StrictHostKeyChecking=accept-new \
+  -L 127.0.0.1:8088:127.0.0.1:8088 ${NIGHTSHIFT_HOST}
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
