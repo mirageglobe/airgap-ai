@@ -60,7 +60,7 @@ func TestStoppedService(t *testing.T) {
 	r.assertInvestigationCites(f.ID, "process", "health")
 	r.assertFeedOrder("announce restart-service", "apply restart-service", "result restart-service ok")
 	rep := r.report()
-	for _, want := range []string{"f1 process_missing via restart-service", "before: row", "after:  row"} {
+	for _, want := range []string{"f1 process_missing via restart-service", "before: row", "after:  row", "scout:  c-", "risk low for restart-service"} {
 		if !strings.Contains(rep, want) {
 			t.Errorf("report missing %q:\n%s", want, rep)
 		}
@@ -329,6 +329,24 @@ func TestStopFlag(t *testing.T) {
 	out, err := Status(r.data)
 	if err != nil || !strings.Contains(out, "stop flag: set") {
 		t.Errorf("status = %q, %v", out, err)
+	}
+}
+
+// Row and finding ids restart every run; the report keeps runs apart.
+func TestReportKeepsRunsApart(t *testing.T) {
+	r := newRig(t)
+	r.mod = func(c *Config) { c.RunID = "run-a" }
+	r.run(RuleFixer{}, 8, func() { r.signal(syscall.SIGKILL) })
+	r.mod = func(c *Config) { c.RunID = "run-b" }
+	r.run(RuleFixer{}, 8, func() { r.signal(syscall.SIGKILL) })
+	rep := r.report()
+	for _, want := range []string{"run run-a", "run run-b"} {
+		if !strings.Contains(rep, want) {
+			t.Errorf("report missing %q:\n%s", want, rep)
+		}
+	}
+	if n := strings.Count(rep, "f1 process_missing via restart-service"); n != 2 {
+		t.Errorf("report lists %d fixes, want 2:\n%s", n, rep)
 	}
 }
 

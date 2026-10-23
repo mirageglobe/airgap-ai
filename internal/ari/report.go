@@ -9,16 +9,31 @@ import (
 	"strings"
 )
 
-// Report renders the one-screen summary from the data folder.
+// Report renders the one-screen summary from the data folder. Row and
+// finding ids restart every run, so everything is keyed by run.
 func Report(dataDir string) (string, error) {
-	rows := map[int]Row{}
+	rows := map[string]map[int]Row{}
+	contracts := map[string][]string{} // run/finding -> contract notes
 	err := eachLine(filepath.Join(dataDir, "log.jsonl"), func(b []byte) error {
 		var ev Event
 		if err := json.Unmarshal(b, &ev); err != nil {
 			return err
 		}
 		if ev.Row != nil {
-			rows[ev.Row.ID] = *ev.Row
+			if rows[ev.Run] == nil {
+				rows[ev.Run] = map[int]Row{}
+			}
+			rows[ev.Run][ev.Row.ID] = *ev.Row
+		}
+		if c := ev.Contract; c != nil && ev.Event == "contract.issued" {
+			note := fmt.Sprintf("%s risk %s", c.ContractID, c.Risk.Level)
+			if len(c.Risk.Flags) > 0 {
+				note += " (" + strings.Join(c.Risk.Flags, ", ") + ")"
+			} else {
+				note += " for " + strings.Join(c.Scope.Capabilities, ", ")
+			}
+			k := ev.Run + "/" + ev.Finding
+			contracts[k] = append(contracts[k], note)
 		}
 		return nil
 	})
@@ -48,19 +63,34 @@ func Report(dataDir string) (string, error) {
 		b.WriteString("  none\n")
 	}
 	for _, f := range fixed {
-		fmt.Fprintf(&b, "  %s %s via %s (%d attempt(s), cycle %d)\n", f.ID, f.Symptom, f.Entry, f.Attempts, f.Cycle)
-		fmt.Fprintf(&b, "    before: %s\n", describeIDs(rows, f.Before))
-		fmt.Fprintf(&b, "    after:  %s\n", describeIDs(rows, f.After))
+		fmt.Fprintf(&b, "  %s %s via %s (%d attempt(s), cycle %d%s)\n", f.ID, f.Symptom, f.Entry, f.Attempts, f.Cycle, runNote(f.Run))
+		fmt.Fprintf(&b, "    before: %s\n", describeIDs(rows[f.Run], f.Before))
+		fmt.Fprintf(&b, "    after:  %s\n", describeIDs(rows[f.Run], f.After))
+		writeContracts(&b, contracts[f.Run+"/"+f.ID])
 	}
 	b.WriteString("\nleft alone:\n")
 	if len(left) == 0 {
 		b.WriteString("  none\n")
 	}
 	for _, f := range left {
-		fmt.Fprintf(&b, "  %s %s: %s (cycle %d)\n", f.ID, f.Symptom, f.Reason, f.Cycle)
-		fmt.Fprintf(&b, "    evidence: %s\n", describeIDs(rows, f.Evidence))
+		fmt.Fprintf(&b, "  %s %s: %s (cycle %d%s)\n", f.ID, f.Symptom, f.Reason, f.Cycle, runNote(f.Run))
+		fmt.Fprintf(&b, "    evidence: %s\n", describeIDs(rows[f.Run], f.Evidence))
+		writeContracts(&b, contracts[f.Run+"/"+f.ID])
 	}
 	return b.String(), nil
+}
+
+func runNote(run string) string {
+	if run == "" {
+		return ""
+	}
+	return ", run " + run
+}
+
+func writeContracts(b *strings.Builder, notes []string) {
+	for _, n := range notes {
+		fmt.Fprintf(b, "    scout:  %s\n", n)
+	}
 }
 
 func describeIDs(rows map[int]Row, ids []int) string {

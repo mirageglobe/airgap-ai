@@ -59,6 +59,7 @@ type Row struct {
 }
 
 type Finding struct {
+	Run      string `json:"run,omitempty"`
 	ID       string `json:"id"`
 	Cycle    int    `json:"cycle"`
 	Symptom  string `json:"symptom"`
@@ -80,6 +81,7 @@ type Cause struct {
 
 type Event struct {
 	Time     time.Time `json:"ts"`
+	Run      string    `json:"run,omitempty"`
 	Cycle    int       `json:"cycle"`
 	Event    string    `json:"event"`
 	Finding  string    `json:"finding,omitempty"`
@@ -298,6 +300,7 @@ func (e *Engine) slow(d time.Duration) bool {
 func (e *Engine) handle(symptom string, rows []int) {
 	e.nFindings++
 	f := &Finding{
+		Run:      e.cfg.RunID,
 		ID:       fmt.Sprintf("f%d", e.nFindings),
 		Cycle:    e.cycle,
 		Symptom:  symptom,
@@ -579,7 +582,7 @@ func (e *Engine) row(id int) (Row, bool) {
 }
 
 func (e *Engine) event(ev Event) {
-	ev.Time, ev.Cycle = time.Now().UTC(), e.cycle
+	ev.Time, ev.Run, ev.Cycle = time.Now().UTC(), e.cfg.RunID, e.cycle
 	e.writeJSON(e.log, ev)
 }
 
