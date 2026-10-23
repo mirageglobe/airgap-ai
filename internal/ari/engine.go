@@ -79,16 +79,17 @@ type Cause struct {
 }
 
 type Event struct {
-	Time    time.Time `json:"ts"`
-	Cycle   int       `json:"cycle"`
-	Event   string    `json:"event"`
-	Finding string    `json:"finding,omitempty"`
-	Entry   string    `json:"entry,omitempty"`
-	Step    string    `json:"step,omitempty"`
-	Detail  string    `json:"detail,omitempty"`
-	Rows    []int     `json:"rows,omitempty"`
-	Row     *Row      `json:"row,omitempty"`
-	Exit    *int      `json:"exit,omitempty"`
+	Time     time.Time `json:"ts"`
+	Cycle    int       `json:"cycle"`
+	Event    string    `json:"event"`
+	Finding  string    `json:"finding,omitempty"`
+	Entry    string    `json:"entry,omitempty"`
+	Step     string    `json:"step,omitempty"`
+	Detail   string    `json:"detail,omitempty"`
+	Rows     []int     `json:"rows,omitempty"`
+	Row      *Row      `json:"row,omitempty"`
+	Contract *Contract `json:"contract,omitempty"`
+	Exit     *int      `json:"exit,omitempty"`
 }
 
 type observation struct {
@@ -103,6 +104,7 @@ type Engine struct {
 	cfg       Config
 	cat       *Catalogue
 	fixer     Fixer
+	scout     *Scout
 	evidence  Evidence
 	client    *http.Client
 	log       *os.File
@@ -160,6 +162,7 @@ func New(cfg Config, cat *Catalogue, fixer Fixer) (*Engine, error) {
 		keepRows:  keepRows,
 		escalated: map[string]bool{},
 	}
+	e.scout = NewScout(cat)
 	e.evidence = cfg.Evidence
 	if e.evidence == nil {
 		e.evidence = recentRows{e}
@@ -306,6 +309,7 @@ func (e *Engine) handle(symptom string, rows []int) {
 	e.say("finding %s: %s (rows %s)", f.ID, symptom, joinInts(rows))
 
 	var tried []string
+	var parent string
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
 		cause, err := e.investigate(f)
 		if err != nil {
@@ -323,16 +327,38 @@ func (e *Engine) handle(symptom string, rows []int) {
 			e.escalate(f, "fixer error: "+err.Error())
 			return
 		}
+		modelReason := reason
+		profile := ""
 		if isModel {
 			e.sayAs("ARI : "+l.Label(), "%s picked %q: %s", f.ID, name, reason)
 			reason = "see the " + l.Label() + " line"
+			profile = l.Label()
 		}
 		if name == "" {
 			e.escalate(f, "no catalogue entry picked: "+reason)
 			return
 		}
-		entry, ok := e.cat.Get(name)
-		if why := e.gate(f, cause, entry, ok); why != "" {
+		c := e.scout.Decide(Decision{
+			Run: e.cfg.RunID, Cause: cause, Pick: name, Reason: modelReason,
+			ByModel: isModel, Model: profile, Parent: parent, BudgetSpent: e.budgetSpent(),
+		})
+		parent = c.ContractID
+		e.event(Event{Event: "contract.issued", Finding: f.ID, Contract: &c})
+		e.say("scout contract %s for %s: intent %s, confidence %.2f, risk %s%s",
+			c.ContractID, f.ID, c.Intent.Primary, c.Intent.Confidence, c.Risk.Level, flagNote(c.Risk.Flags))
+		if c.Risk.Level != "low" {
+			e.event(Event{Event: "contract.refused", Finding: f.ID, Detail: strings.Join(c.Risk.Flags, ",")})
+			e.escalate(f, "scout refused: "+strings.Join(c.Risk.Flags, ", "))
+			return
+		}
+		entry, _ := e.cat.Get(name)
+		if err := e.scout.Verify(c, entry.Name); err != nil {
+			e.event(Event{Event: "contract.refused", Finding: f.ID, Entry: entry.Name, Detail: err.Error()})
+			e.escalate(f, "contract refused: "+err.Error())
+			return
+		}
+		e.event(Event{Event: "contract.verified", Finding: f.ID, Entry: entry.Name, Detail: c.ContractID})
+		if why := e.gate(f, entry); why != "" {
 			e.escalate(f, why)
 			return
 		}
@@ -394,18 +420,12 @@ func (r recentRows) Rows(f *Finding) ([]Row, error) {
 	return out, nil
 }
 
-// gate decides whether a picked repair may run. The fixer has no say here.
-// An unknown name is fixer words, so it is not echoed.
-func (e *Engine) gate(f *Finding, c Cause, entry Entry, ok bool) string {
+// gate is the verifier's last check before acting, after Scout's contract
+// has been verified. The fixer has no say here.
+func (e *Engine) gate(f *Finding, entry Entry) string {
 	switch {
-	case !ok:
-		return "picked entry is not in the catalogue"
-	case entry.Symptom != c.Symptom:
-		return fmt.Sprintf("%s handles %s, not %s", entry.Name, entry.Symptom, c.Symptom)
 	case e.stopRequested():
 		return "stop requested"
-	case e.budgetSpent():
-		return "hourly fix budget spent"
 	case e.exec(f, entry.Name, "precondition", entry.Precondition) != 0:
 		return entry.Name + " precondition failed"
 	}
@@ -602,6 +622,13 @@ func describeRow(r Row) string {
 		kv = append(kv, fmt.Sprintf("%s=%v", k, r.Data[k]))
 	}
 	return fmt.Sprintf("row %d %s %s", r.ID, r.Kind, strings.Join(kv, " "))
+}
+
+func flagNote(flags []string) string {
+	if len(flags) == 0 {
+		return ""
+	}
+	return " (" + strings.Join(flags, ", ") + ")"
 }
 
 func joinInts(ids []int) string {

@@ -9,12 +9,14 @@ built for the Open Agent Hackathon 2026, track 03 (reasoning architecture). see 
 * explorer: every cycle checks the target's process and health, writes each observation as a row to the evidence db, and compares health with a baseline from the first clean cycles
 * investigator: queries Zetaris for the finding's rows and the baseline rows before it, and writes a cause that cites them; if Zetaris is down or a cited row is missing, it escalates and nothing runs
 * fixer: picks one catalogue entry for the cause, by rule or by a model over an OpenAI compatible endpoint (Meterless Nightshift in the product); model words only appear on `[ ARI : nightshift ]` lines
-* verifier: the gate decides, not the fixer: the entry must exist, match the symptom, pass its precondition, fit the hourly budget, and no stop may be requested; then apply, done test, undo on failure, one retry through the investigator, then escalate
+* Scout Intent (Meterless engine): turns the cause and the fixer's pick into a signed execution contract: intent, risk flags (unknown entry, wrong symptom, injection in the model's reason, budget spent), a tool plan, and exactly one capability; anything flagged is refused
+* verifier: acts only on a valid contract (signature, not expired, entry inside its capabilities), then checks the stop flag and the entry's precondition; then apply, done test, undo on failure, one retry through the investigator with a re-planned contract, then escalate
 * reporter: `ari report` prints what was fixed with before and after rows, and what was left alone and why
 
 ## stack
 
 * Zetaris: the evidence store; ari writes rows to a postgres db registered in Zetaris as `ari_evidence`, and the investigator reads them back with Lightning SQL
+* Meterless Scout Intent: implemented in go from the published spec (`internal/ari/scout.go`): intent registry from the catalogue, guard, route, HMAC signed execution contracts with a 5 minute TTL, verified at the verifier's boundary
 * Meterless Nightshift: the model runtime the fixer calls (OpenAI compatible); the rule fixer runs when no model is set
 * go: one binary, nothing to install on the offline machine
 

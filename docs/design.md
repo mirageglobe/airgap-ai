@@ -106,7 +106,7 @@ each step ends with a done test it can pass by itself.
 * [x] `[ari]` preflight with the no route out check, fail closed, and the banner; test: it refuses to start with the internet reachable (2026-10-23)
 * [x] `[ari]` explorer, baseline, threshold and the evidence db registered in Zetaris; test: a planted fault yields a finding and clean cycles do not (2026-10-23)
 * [x] `[ari]` investigator with `run_sql` through Zetaris; test: a finding gets a cause that cites real rows (2026-10-24)
-* [ ] `[ari]` fixer with Scout Intent and the catalogue; test: on 10 planted faults it picks the right entry or escalates, with a rule based match as the fallback; this is the engine's feature test (2026-10-24)
+* [x] `[ari]` fixer with Scout Intent and the catalogue (Scout in go from the spec, signed contracts verified by the verifier; 10 planted decisions in `TestScoutPlantedFaults`, 2026-10-23; model pick on real faults still open); test: on 10 planted faults it picks the right entry or escalates, with a rule based match as the fallback; this is the engine's feature test (2026-10-24)
 * [x] `[ari]` verifier on the real stack: gate, apply, done test, undo, one retry, escalate; test: an entry with no undo is rejected, and a repair whose done test is forced to fail is undone and retried once (2026-10-25)
 * [x] `[ari]` reporter and `ari report` (2026-10-25)
 * [ ] `[cli]` `ari status`, `ari watch`, `ari stop`, `--cycles N` done (2026-10-23); sample mode open (2026-10-25)
