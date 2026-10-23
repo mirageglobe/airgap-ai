@@ -83,6 +83,14 @@ const fixerPrompt = `You pick one repair for a fault on an offline machine.
 You only pick from the catalogue below; you never invent a repair and you do not decide whether to act.
 Reply with JSON only, no other text: {"entry": "<catalogue name, or empty if none fits>", "reason": "<one line>"}`
 
+// BadReply is a model reply that is not the JSON asked for. Reply is model
+// words, so the engine shows it only on a tagged line.
+type BadReply struct {
+	Reply string
+}
+
+func (*BadReply) Error() string { return "model returned bad json" }
+
 // ModelFixer asks the model to pick a catalogue entry. Bad JSON or no pick
 // escalates; a wrong pick is stopped by the verifier's gate.
 type ModelFixer struct {
@@ -104,13 +112,9 @@ func (f ModelFixer) Pick(c Cause, cat *Catalogue) (string, string, error) {
 		Reason string `json:"reason"`
 	}
 	if err := json.Unmarshal([]byte(jsonObject(reply)), &pick); err != nil {
-		return "", "model returned bad json", nil
+		return "", "", &BadReply{Reply: reply}
 	}
-	reason := oneLine(pick.Reason)
-	if pick.Entry == "" {
-		return "", "model found no catalogue entry: " + reason, nil
-	}
-	return pick.Entry, reason, nil
+	return pick.Entry, oneLine(pick.Reason), nil
 }
 
 func (f ModelFixer) Label() string {

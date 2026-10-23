@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -23,6 +24,10 @@ import (
 
 // maxAttempts is the first try plus one retry through the investigator.
 const maxAttempts = 2
+
+// keepRows is how many recent rows stay in memory for the investigator; the
+// full history is in log.jsonl.
+const keepRows = 1000
 
 type Config struct {
 	DataDir        string
@@ -94,6 +99,8 @@ type Engine struct {
 	feed      *os.File
 	findings  *os.File
 	rows      []Row
+	nRows     int
+	keepRows  int
 	nFindings int
 	escalated map[string]bool
 	fixes     []time.Time
@@ -112,6 +119,21 @@ func New(cfg Config, cat *Catalogue, fixer Fixer) (*Engine, error) {
 	if cfg.Interval == 0 {
 		cfg.Interval = 5 * time.Second
 	}
+	// Catalogue commands run with the target as working dir, so relative
+	// paths from the command line would resolve against the wrong folder.
+	// A bare toyd name is left for PATH lookup.
+	var err error
+	if cfg.DataDir, err = filepath.Abs(cfg.DataDir); err != nil {
+		return nil, err
+	}
+	if cfg.TargetDir, err = filepath.Abs(cfg.TargetDir); err != nil {
+		return nil, err
+	}
+	if strings.ContainsRune(cfg.Toyd, filepath.Separator) {
+		if cfg.Toyd, err = filepath.Abs(cfg.Toyd); err != nil {
+			return nil, err
+		}
+	}
 	if err := os.MkdirAll(cfg.DataDir, 0o755); err != nil {
 		return nil, err
 	}
@@ -120,9 +142,9 @@ func New(cfg Config, cat *Catalogue, fixer Fixer) (*Engine, error) {
 		cat:       cat,
 		fixer:     fixer,
 		client:    &http.Client{Timeout: 2 * time.Second},
+		keepRows:  keepRows,
 		escalated: map[string]bool{},
 	}
-	var err error
 	for _, f := range []struct {
 		dst  **os.File
 		name string
@@ -181,7 +203,9 @@ func (e *Engine) process() (int, bool) {
 	if err != nil || pid <= 0 {
 		return 0, false
 	}
-	return pid, syscall.Kill(pid, 0) == nil
+	// EPERM means the process exists but belongs to another user.
+	err = syscall.Kill(pid, 0)
+	return pid, err == nil || errors.Is(err, syscall.EPERM)
 }
 
 func (e *Engine) health() (observation, Row) {
@@ -245,33 +269,39 @@ func (e *Engine) handle(symptom string, rows []int) {
 	e.event(Event{Event: "finding", Finding: f.ID, Detail: symptom, Rows: rows})
 	e.say("finding %s: %s (rows %s)", f.ID, symptom, joinInts(rows))
 
+	var tried []string
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
 		cause := e.investigate(f)
 		name, reason, err := e.fixer.Pick(cause, e.cat)
+		l, isModel := e.fixer.(labeled)
+		// Model words only ever appear on tagged lines.
+		var bad *BadReply
+		if isModel && errors.As(err, &bad) {
+			e.sayAs("ARI : "+l.Label(), "%s replied: %s", f.ID, oneLine(bad.Reply))
+		}
 		if err != nil {
 			e.escalate(f, "fixer error: "+err.Error())
 			return
 		}
-		// Model words only ever appear on tagged lines.
-		if l, ok := e.fixer.(labeled); ok {
+		if isModel {
 			e.sayAs("ARI : "+l.Label(), "%s picked %q: %s", f.ID, name, reason)
 			reason = "see the " + l.Label() + " line"
-			if name == "" {
-				e.escalate(f, "fixer picked no catalogue entry")
-				return
-			}
 		}
 		if name == "" {
-			e.escalate(f, reason)
+			e.escalate(f, "no catalogue entry picked: "+reason)
 			return
 		}
 		entry, ok := e.cat.Get(name)
-		if why := e.gate(f, cause, entry, ok, name); why != "" {
+		if why := e.gate(f, cause, entry, ok); why != "" {
 			e.escalate(f, why)
 			return
 		}
 		f.Entry, f.Attempts = name, attempt
-		if e.fix(f, entry, reason) {
+		if !slices.Contains(tried, name) {
+			tried = append(tried, name)
+		}
+		switch e.fix(f, entry, reason) {
+		case fixOK:
 			f.Status = "resolved"
 			_, after := e.health()
 			f.After = []int{after.ID}
@@ -279,15 +309,22 @@ func (e *Engine) handle(symptom string, rows []int) {
 			e.say("resolved %s with %s", f.ID, name)
 			e.record(f)
 			return
+		case fixUndoFailed:
+			e.escalate(f, name+" undo failed, target may be half changed")
+			return
 		}
 	}
-	e.escalate(f, fmt.Sprintf("%s failed its done test %d times", f.Entry, maxAttempts))
+	e.escalate(f, fmt.Sprintf("done test failed %d times (tried %s)", maxAttempts, strings.Join(tried, ", ")))
 }
 
 func (e *Engine) investigate(f *Finding) Cause {
 	parts := make([]string, 0, len(f.Evidence))
 	for _, id := range f.Evidence {
-		parts = append(parts, describeRow(e.rows[id-1]))
+		if r, ok := e.row(id); ok {
+			parts = append(parts, describeRow(r))
+		} else {
+			parts = append(parts, fmt.Sprintf("row %d (see log.jsonl)", id))
+		}
 	}
 	c := Cause{
 		Finding:  f.ID,
@@ -300,16 +337,17 @@ func (e *Engine) investigate(f *Finding) Cause {
 }
 
 // gate decides whether a picked repair may run. The fixer has no say here.
-func (e *Engine) gate(f *Finding, c Cause, entry Entry, ok bool, name string) string {
+// An unknown name is fixer words, so it is not echoed.
+func (e *Engine) gate(f *Finding, c Cause, entry Entry, ok bool) string {
 	switch {
 	case !ok:
-		return fmt.Sprintf("%q is not in the catalogue", name)
+		return "picked entry is not in the catalogue"
 	case entry.Symptom != c.Symptom:
-		return fmt.Sprintf("%s handles %s, not %s", name, entry.Symptom, c.Symptom)
+		return fmt.Sprintf("%s handles %s, not %s", entry.Name, entry.Symptom, c.Symptom)
 	case e.budgetSpent():
 		return "hourly fix budget spent"
-	case e.exec(f, name, "precondition", entry.Precondition) != 0:
-		return name + " precondition failed"
+	case e.exec(f, entry.Name, "precondition", entry.Precondition) != 0:
+		return entry.Name + " precondition failed"
 	}
 	return ""
 }
@@ -324,7 +362,15 @@ func (e *Engine) budgetSpent() bool {
 	return n >= e.cfg.FixBudget
 }
 
-func (e *Engine) fix(f *Finding, entry Entry, reason string) bool {
+type fixResult int
+
+const (
+	fixOK fixResult = iota
+	fixFailed
+	fixUndoFailed
+)
+
+func (e *Engine) fix(f *Finding, entry Entry, reason string) fixResult {
 	e.say("announce %s for %s: %s", entry.Name, f.ID, reason)
 	e.fixes = append(e.fixes, time.Now())
 	e.say("apply %s", entry.Name)
@@ -333,12 +379,15 @@ func (e *Engine) fix(f *Finding, entry Entry, reason string) bool {
 	f.Evidence = append(f.Evidence, row.ID)
 	if passed {
 		e.say("result %s ok", entry.Name)
-		return true
+		return fixOK
 	}
 	e.say("result %s failed, undoing", entry.Name)
-	e.exec(f, entry.Name, "undo", entry.Undo)
+	if code := e.exec(f, entry.Name, "undo", entry.Undo); code != 0 {
+		e.say("undo %s failed with exit %d", entry.Name, code)
+		return fixUndoFailed
+	}
 	e.say("undo %s done", entry.Name)
-	return false
+	return fixFailed
 }
 
 func (e *Engine) doneTest(entry Entry) bool {
@@ -415,10 +464,26 @@ func exitCode(err error) int {
 }
 
 func (e *Engine) addRow(kind string, data map[string]any) Row {
-	r := Row{ID: len(e.rows) + 1, Cycle: e.cycle, Kind: kind, Data: data}
+	e.nRows++
+	r := Row{ID: e.nRows, Cycle: e.cycle, Kind: kind, Data: data}
 	e.rows = append(e.rows, r)
+	if len(e.rows) > 2*e.keepRows {
+		e.rows = slices.Clone(e.rows[len(e.rows)-e.keepRows:])
+	}
 	e.event(Event{Event: "row", Row: &r})
 	return r
+}
+
+// row finds a recent row by id; older rows are only in log.jsonl.
+func (e *Engine) row(id int) (Row, bool) {
+	if len(e.rows) == 0 {
+		return Row{}, false
+	}
+	i := id - e.rows[0].ID
+	if i < 0 || i >= len(e.rows) {
+		return Row{}, false
+	}
+	return e.rows[i], true
 }
 
 func (e *Engine) event(ev Event) {

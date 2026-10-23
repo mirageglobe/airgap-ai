@@ -105,6 +105,9 @@ func TestBadFixUndoRetryEscalate(t *testing.T) {
 	if len(f.Evidence) == 0 {
 		t.Error("escalation has no evidence rows")
 	}
+	if !strings.Contains(f.Reason, "restore-config") {
+		t.Errorf("reason %q does not name the entry tried", f.Reason)
+	}
 	rep := r.report()
 	if !strings.Contains(rep, "left alone:\n  f1 health_failing") {
 		t.Errorf("report does not list f1 under left alone:\n%s", rep)
@@ -167,6 +170,116 @@ func TestCatalogueRejectsEntryWithoutUndo(t *testing.T) {
 	}
 }
 
+// Relative -target, -toyd and -data still work: catalogue commands run in
+// the target dir, so ari must not hand them paths relative to its own cwd.
+func TestRelativePaths(t *testing.T) {
+	r := newRig(t)
+	t.Chdir(filepath.Dir(r.target))
+	rel := func(p string) string {
+		wd, _ := os.Getwd()
+		out, err := filepath.Rel(wd, p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return out
+	}
+	r.mod = func(c *Config) {
+		c.TargetDir, c.Toyd, c.DataDir = filepath.Base(r.target), rel(toydBin), rel(r.data)
+	}
+	r.run(RuleFixer{}, 12, func() { r.signal(syscall.SIGKILL) })
+	if f := r.onlyFinding(); f.Status != "resolved" {
+		t.Fatalf("finding = %+v, want resolved with relative paths", f)
+	}
+}
+
+// A failed undo stops at once: no retry on a target in an unknown state.
+func TestUndoFailureEscalates(t *testing.T) {
+	r := newRig(t)
+	b, err := os.ReadFile("../../catalogue/toyd.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	undo := `"cp \"{{.Dir}}/toyd.conf.pre\" \"{{.Dir}}/toyd.conf\""`
+	if !strings.Contains(string(b), undo) {
+		t.Fatal("restore-config undo not found in catalogue")
+	}
+	path := filepath.Join(t.TempDir(), "cat.json")
+	writeFile(t, path, []byte(strings.Replace(string(b), undo, `"exit 3"`, 1)))
+	if r.cat, err = LoadCatalogue(path); err != nil {
+		t.Fatal(err)
+	}
+	corrupt := []byte("%% corrupted %%\n")
+	r.run(RuleFixer{}, 10, func() {
+		writeFile(t, filepath.Join(r.target, "toyd.conf"), corrupt)
+		writeFile(t, filepath.Join(r.target, "toyd.conf.good"), corrupt)
+	})
+	f := r.onlyFinding()
+	if f.Status != "unresolved" || f.Attempts != 1 || !strings.Contains(f.Reason, "undo failed") {
+		t.Fatalf("finding = %+v, want escalated after 1 attempt with undo failed", f)
+	}
+	if n := r.execCount("apply"); n != 1 {
+		t.Errorf("apply ran %d times after a failed undo, want 1", n)
+	}
+}
+
+// A pid owned by another user (EPERM) is alive, not missing.
+func TestProcessOtherUserIsAlive(t *testing.T) {
+	if os.Getuid() == 0 {
+		t.Skip("root never gets EPERM")
+	}
+	dir := t.TempDir()
+	writeFile(t, filepath.Join(dir, "toyd.pid"), []byte("1"))
+	e, err := New(Config{DataDir: filepath.Join(dir, "data"), TargetDir: dir}, nil, RuleFixer{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer e.Close()
+	if _, alive := e.process(); !alive {
+		t.Error("pid 1 reported missing, want alive")
+	}
+}
+
+// toyd that cannot take its port exits without writing a pidfile.
+func TestToydNoPidfileWithoutPort(t *testing.T) {
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer l.Close()
+	dir := t.TempDir()
+	conf := filepath.Join(dir, "toyd.conf")
+	writeFile(t, conf, []byte(fmt.Sprintf("port=%d\nstatus=ok\n", l.Addr().(*net.TCPAddr).Port)))
+	pid := filepath.Join(dir, "toyd.pid")
+	if err := exec.Command(toydBin, "-config", conf, "-pidfile", pid).Run(); err == nil {
+		t.Fatal("toyd started on a taken port")
+	}
+	if _, err := os.Stat(pid); !os.IsNotExist(err) {
+		t.Errorf("pidfile written by a toyd that never listened: %v", err)
+	}
+}
+
+func TestRowWindow(t *testing.T) {
+	dir := t.TempDir()
+	e, err := New(Config{DataDir: dir, TargetDir: dir}, nil, RuleFixer{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer e.Close()
+	e.keepRows = 3
+	for range 10 {
+		e.addRow("x", nil)
+	}
+	if len(e.rows) > 2*e.keepRows {
+		t.Errorf("%d rows in memory, want at most %d", len(e.rows), 2*e.keepRows)
+	}
+	if r, ok := e.row(10); !ok || r.ID != 10 {
+		t.Errorf("row 10 = %+v %v, want found", r, ok)
+	}
+	if _, ok := e.row(1); ok {
+		t.Error("row 1 still in memory")
+	}
+}
+
 type pickFixer string
 
 func (p pickFixer) Pick(Cause, *Catalogue) (string, string, error) {
@@ -179,6 +292,7 @@ type rig struct {
 	data   string
 	health string
 	cat    *Catalogue
+	mod    func(*Config)
 }
 
 func newRig(t *testing.T) *rig {
@@ -224,7 +338,7 @@ func newRig(t *testing.T) *rig {
 
 func (r *rig) run(fixer Fixer, cycles int, inject func()) {
 	r.t.Helper()
-	e, err := New(Config{
+	cfg := Config{
 		DataDir:   r.data,
 		TargetDir: r.target,
 		Toyd:      toydBin,
@@ -236,7 +350,11 @@ func (r *rig) run(fixer Fixer, cycles int, inject func()) {
 				inject()
 			}
 		},
-	}, r.cat, fixer)
+	}
+	if r.mod != nil {
+		r.mod(&cfg)
+	}
+	e, err := New(cfg, r.cat, fixer)
 	if err != nil {
 		r.t.Fatal(err)
 	}

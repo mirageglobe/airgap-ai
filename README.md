@@ -4,7 +4,7 @@ ari: a small team of local agents that look after a machine with no internet. th
 
 built for the Open Agent Hackathon 2026, track 03 (reasoning architecture).
 
-status: proof of concept. the verifier loop (gate, apply, done test, undo, one retry, escalate) runs against a toy service with a rule based fixer; Zetaris and Nightshift are not wired yet. see [docs/design.md](docs/design.md).
+status: proof of concept. the verifier loop (gate, apply, done test, undo, one retry, escalate) runs against a toy service. the fixer is rule based, or a model over any OpenAI compatible endpoint; Zetaris is not wired yet and Nightshift is not tested yet. see [docs/design.md](docs/design.md).
 
 ## stack
 

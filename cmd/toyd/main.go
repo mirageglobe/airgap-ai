@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -28,6 +29,12 @@ func main() {
 	port := conf["port"]
 	if port == "" {
 		log.Fatal("toyd: no port in config")
+	}
+	// The pidfile goes down only once the port is ours, so a toyd that
+	// cannot listen never looks alive.
+	l, err := net.Listen("tcp", "127.0.0.1:"+port)
+	if err != nil {
+		log.Fatal(err)
 	}
 	if err := os.WriteFile(*pidfile, []byte(strconv.Itoa(os.Getpid())), 0o644); err != nil {
 		log.Fatal(err)
@@ -62,7 +69,7 @@ func main() {
 		}
 		fmt.Fprintln(w, "ok")
 	})
-	log.Fatal(http.ListenAndServe("127.0.0.1:"+port, nil))
+	log.Fatal(http.Serve(l, nil))
 }
 
 // readConfig parses key=value lines; blank lines and # comments are skipped.

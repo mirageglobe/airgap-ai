@@ -1,6 +1,6 @@
 # ari: design
 
-status: design, nothing built. Open Agent Hackathon 2026, track 03 (reasoning architecture), team of two. build window 2026-10-22 00:00 to 2026-10-27 23:45 utc.
+status: proof of concept built (verifier loop, toy target, rule and model fixers); Zetaris and Nightshift not wired yet. Open Agent Hackathon 2026, track 03 (reasoning architecture), team of two. build window 2026-10-22 00:00 to 2026-10-27 23:45 utc.
 
 ## pitch
 
