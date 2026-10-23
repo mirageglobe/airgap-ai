@@ -24,9 +24,11 @@ chown -R ari:ari /var/lib/ari
 runuser -u ari -- sh -c "cd $T && nohup $BIN/toyd -config $T/toyd.conf -pidfile $T/toyd.pid >>$T/toyd.log 2>&1 &"
 sleep 1
 
-# The baseline needs three clean cycles; inject after about five.
+# The baseline needs three clean cycles; inject once ari has run five.
 inject() {
-	sleep 7
+	until [ "$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["cycle"])' "$D/state.json" 2>/dev/null || echo 0)" -ge 5 ]; do
+		sleep 0.3
+	done
 	case "$SCENARIO" in
 	stopped) kill -9 "$(cat "$T/toyd.pid")" ;;
 	badfix)
