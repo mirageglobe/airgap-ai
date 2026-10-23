@@ -1,6 +1,6 @@
 # ari: design
 
-status: proof of concept built (verifier loop, toy target, rule and model fixers); Zetaris and Nightshift not wired yet. Open Agent Hackathon 2026, track 03 (reasoning architecture), team of two. build window 2026-10-22 00:00 to 2026-10-27 23:45 utc.
+status: running on a Debian 13 server with Zetaris in the loop; acceptance tests 1 to 3 pass end to end under the air gap. Nightshift not wired yet. Open Agent Hackathon 2026, track 03 (reasoning architecture), team of two. build window 2026-10-22 00:00 to 2026-10-27 23:45 utc.
 
 ## pitch
 
@@ -73,10 +73,10 @@ the loop: explorer, investigator, fixer, verifier. a failed done test returns to
 
 ## shape
 
-* host: undecided, a laptop or a cloud vm. Zetaris needs 8 gb and 4 cpus given to docker and 15 gb disk; its images are intel/amd, so apple silicon needs rosetta. images are pulled once before the gap closes, like the model.
+* host: a Debian 13 cloud vm (4 vcpu, 16 gb). earlier note: Zetaris needs 8 gb and 4 cpus given to docker and 15 gb disk; its images are intel/amd, so apple silicon needs rosetta. images are pulled once before the gap closes, like the model.
 * Nightshift ships only for mac, windows and dgx spark, so it runs on a laptop either way, serving one local model lane. its default address is `127.0.0.1:8088`; hotspot mode shares it on the network. reaching it from a container or a vm is a day 1 check.
-* `ari` container (named after the process, it is not ari itself): holds the ari process (all five agents), read only tools and the toy target, on `debian:trixie-slim`, non root, on a docker `--internal` network.
-* evidence db: a small postgres the explorer writes to and Zetaris reads from (Zetaris cannot read local files). exact network wiring is a day 1 decision.
+* `ari` systemd unit instead of a container: runs as the unprivileged `ari` user with `IPAddressDeny=any` and `IPAddressAllow=localhost`, a read only system (`ProtectSystem=strict`) and only `/var/lib/ari` writable; it is listed as `ari.service` and in `ps`.
+* evidence db: a postgres container on Zetaris's docker network, published on 127.0.0.1 only. ari writes rows to it; Zetaris reads it as datasource `ari_evidence` with a read only role; the investigator queries `ari_evidence.evidence_rows` through the Zetaris UI proxy (`/api/proxy/sql-editor/sqls/run-query`).
 * the demo target is a small toy service inside the same `ari` container, run by a separate unprivileged user, so the fixes (restart it, restore a known good config, clear a full scratch folder) never reach beyond it.
 * the catalogue is a plain file, one entry per repair: name, symptom signature, precondition, command, done test, undo. adding a repair is adding an entry, and an entry needs its undo or it is rejected.
 * model: a small local model from the Nightshift catalogue (12b or smaller), thinking off, json format; picked on day 1 with a 10 fault test.
@@ -100,16 +100,16 @@ each step ends with a done test it can pass by itself.
 
 * [x] `[poc]` verifier loop with a rule based fixer and the toy target, no Zetaris or Nightshift; test: a broken target is fixed, a forced done test failure is undone and escalated (2026-10-22). acceptance tests 1 to 3 pass in `internal/ari`; still open until the stack is wired: Zetaris rows as evidence
 * [x] `[ari]` model fixer over an OpenAI compatible endpoint (Nightshift in the product); bad json, no pick or an unreachable model escalates with nothing run; model words only on `[ ARI : nightshift ]` lines; tested against a fake endpoint (2026-10-23)
-* [ ] `[env]` install Zetaris (`./verify.sh` passes) and Nightshift (a local lane answers); then cut the network and repeat both checks; if either fails offline, rethink the air gap claim (2026-10-22)
+* [x] `[env]` install Zetaris (`./verify.sh` passes, 2026-10-23) and Nightshift (open) (a local lane answers); then cut the network and repeat both checks; if either fails offline, rethink the air gap claim (2026-10-22)
 * [ ] `[env]` reach Nightshift and Zetaris from a container on an `--internal` network (2026-10-22)
 * [ ] `[ari]` the container image: debian slim, tools, non root, read only root, the toy target; test: the target runs and a write outside the data folder fails (2026-10-23)
-* [ ] `[ari]` preflight with the no route out check, fail closed, and the banner; test: it refuses to start with the internet reachable (2026-10-23)
-* [ ] `[ari]` explorer, baseline, threshold and the evidence db registered in Zetaris; test: a planted fault yields a finding and clean cycles do not (2026-10-23)
-* [ ] `[ari]` investigator with `run_sql` through Zetaris; test: a finding gets a cause that cites real rows (2026-10-24)
+* [x] `[ari]` preflight with the no route out check, fail closed, and the banner; test: it refuses to start with the internet reachable (2026-10-23)
+* [x] `[ari]` explorer, baseline, threshold and the evidence db registered in Zetaris; test: a planted fault yields a finding and clean cycles do not (2026-10-23)
+* [x] `[ari]` investigator with `run_sql` through Zetaris; test: a finding gets a cause that cites real rows (2026-10-24)
 * [ ] `[ari]` fixer with Scout Intent and the catalogue; test: on 10 planted faults it picks the right entry or escalates, with a rule based match as the fallback; this is the engine's feature test (2026-10-24)
-* [ ] `[ari]` verifier on the real stack: gate, apply, done test, undo, one retry, escalate; test: an entry with no undo is rejected, and a repair whose done test is forced to fail is undone and retried once (2026-10-25)
-* [ ] `[ari]` reporter and `ari report` (2026-10-25)
-* [ ] `[cli]` `ari status`, `ari watch`, `ari stop`, `--cycles N`, sample mode (2026-10-25)
+* [x] `[ari]` verifier on the real stack: gate, apply, done test, undo, one retry, escalate; test: an entry with no undo is rejected, and a repair whose done test is forced to fail is undone and retried once (2026-10-25)
+* [x] `[ari]` reporter and `ari report` (2026-10-25)
+* [ ] `[cli]` `ari status`, `ari watch`, `ari stop`, `--cycles N` done (2026-10-23); sample mode open (2026-10-25)
 * [ ] `[repo]` one setup command, readme, `.env.example`, sample inputs and outputs, clean setup tested from scratch (2026-10-26)
 * [ ] `[demo]` the demo script, run twice end to end; record the video; build the deck; write the sponsor explanation (2026-10-26)
 * [ ] `[submit]` declare pre existing components, check for committed secrets, submit on HackOS (2026-10-27)
