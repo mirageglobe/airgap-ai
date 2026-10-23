@@ -41,6 +41,8 @@ type Config struct {
 	Feed           io.Writer
 	AfterCycle     func(cycle int)
 	Evidence       Evidence // nil reads the engine's recent rows
+	Sink           RowSink  // nil keeps rows in memory and log.jsonl only
+	RunID          string   // tags rows in the sink; defaults to the start time
 }
 
 // Evidence gives the investigator the rows behind a finding. Zetaris SQL
@@ -126,6 +128,9 @@ func New(cfg Config, cat *Catalogue, fixer Fixer) (*Engine, error) {
 	}
 	if cfg.Interval == 0 {
 		cfg.Interval = 5 * time.Second
+	}
+	if cfg.RunID == "" {
+		cfg.RunID = time.Now().UTC().Format("20060102T150405Z")
 	}
 	// Catalogue commands run with the target as working dir, so relative
 	// paths from the command line would resolve against the wrong folder.
@@ -504,6 +509,14 @@ func (e *Engine) addRow(kind string, data map[string]any) Row {
 		e.rows = slices.Clone(e.rows[len(e.rows)-e.keepRows:])
 	}
 	e.event(Event{Event: "row", Row: &r})
+	// A failed write leaves the row out of Zetaris, so the investigator
+	// escalates any finding that cites it.
+	if e.cfg.Sink != nil {
+		if err := e.cfg.Sink.Put(e.cfg.RunID, r); err != nil {
+			e.event(Event{Event: "sink_error", Detail: err.Error(), Rows: []int{r.ID}})
+			e.say("evidence store write failed for row %d: %v", r.ID, err)
+		}
+	}
 	return r
 }
 

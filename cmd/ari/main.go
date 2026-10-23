@@ -40,6 +40,9 @@ func run(args []string) {
 	modelURL := fs.String("model-url", os.Getenv("METERLESS_BASE_URL"), "OpenAI-compatible base url; empty uses the rule fixer")
 	modelName := fs.String("model", envOr("METERLESS_MODEL", "meterless/auto"), "model or routing mode")
 	modelLabel := fs.String("model-label", "nightshift", "feed tag for model lines")
+	evidenceDSN := fs.String("evidence-dsn", os.Getenv("ARI_EVIDENCE_DSN"), "postgres url of the evidence db; empty keeps rows in memory")
+	zetarisURL := fs.String("zetaris-url", os.Getenv("ZETARIS_BASE_URL"), "Zetaris UI origin; empty reads evidence from memory")
+	zetarisUser := fs.String("zetaris-user", envOr("ZETARIS_USERNAME", "admin@zetaris.com"), "Zetaris user")
 	fs.Parse(args)
 
 	cat, err := ari.LoadCatalogue(*catalogue)
@@ -54,6 +57,24 @@ func run(args []string) {
 			Name:    *modelName,
 			Label:   *modelLabel,
 		}}
+	}
+	if *evidenceDSN != "" {
+		sink, err := ari.NewPostgresSink(*evidenceDSN)
+		if err != nil {
+			fail(fmt.Errorf("evidence db: %w", err))
+		}
+		defer sink.Close()
+		cfg.Sink = sink
+	}
+	if *zetarisURL != "" {
+		if cfg.Sink == nil {
+			fail(fmt.Errorf("-zetaris-url needs -evidence-dsn: Zetaris reads the rows ari writes there"))
+		}
+		cfg.RunID = time.Now().UTC().Format("20060102T150405Z")
+		cfg.Evidence = ari.ZetarisEvidence{
+			Z:   &ari.Zetaris{BaseURL: *zetarisURL, User: *zetarisUser, Password: os.Getenv("ZETARIS_PASSWORD")},
+			Run: cfg.RunID,
+		}
 	}
 	cfg.Feed = os.Stdout
 	e, err := ari.New(cfg, cat, fixer)
