@@ -21,7 +21,7 @@ VULTR_REGION=ams
 VULTR_OS=2625 # Debian 13
 GO_VERSION=1.27.3
 GO_SHA256=65efbc80fdc1fa2cd2631cad5b481777a68e8725f34e89f50fc6ac714e379b40
-NS_DEB=meterless-runtime_1.4.5-1_arm64.deb
+NS_DEB=meterless-runtime_1.5.1-1_arm64.deb
 NS_URL=https://meterless.ai/Nightshift/DGX
 SSH="ssh -i $KEY -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10"
 
