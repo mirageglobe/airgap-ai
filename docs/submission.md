@@ -6,7 +6,7 @@ working text for the HackOS submission, the deck and the video. keep it true to 
 
 **ari**: local agents that keep an offline server healthy.
 
-ari is for teams running servers on isolated, high assurance networks, where nothing can phone home and nobody is watching at 3am. it finds what is broken, fixes it only from a short catalogue of approved, reversible repairs, proves each fix with a done test, undoes it if the test fails, and escalates everything else to the next human with the evidence. it cannot reach the internet, and it says so, out loud, every time it acts.
+ari is for the on-call admin of servers on isolated, high assurance networks, such as a utility's air-gapped operations servers, where nothing can phone home and nobody is watching at 3am. it finds what is broken, fixes it only from a short catalogue of approved, reversible repairs, proves each fix with a done test, undoes it if the test fails, and escalates everything else to the next human with the evidence. it cannot reach the internet, and it says so, out loud, every time it acts.
 
 track: 03, reasoning architecture.
 

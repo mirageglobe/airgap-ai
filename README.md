@@ -2,6 +2,8 @@
 
 ari: a small team of local agents that look after a machine with no internet. they find what is broken, fix it from a short list of approved, reversible repairs, check the fix worked, undo it if not, and escalate anything else to a human.
 
+who it is for: the on-call admin of servers on isolated, high assurance networks, such as a utility's air-gapped operations servers, where nothing can phone home and a dead service waits for a human to walk in.
+
 built for the Open Agent Hackathon 2026, track 03 (reasoning architecture). see [docs/design.md](docs/design.md).
 
 ## how it works
