@@ -1,0 +1,17 @@
+{
+  "project": "ari",
+  "description": "Local agents that keep an offline server healthy: they find what is broken, fix it only from a catalogue of approved, reversible repairs, prove each fix with a done test, undo it if the test fails, and escalate everything else to a human with the evidence.",
+  "hackathon": "Open Agent Hackathon 2026",
+  "track": "Reasoning Architecture",
+  "repository": "https://github.com/mirageglobe/airgap-ai",
+  "demo_video": "docs/ari-demo.mp4",
+  "slide_deck": "docs/ari-local-agents-for-offline-servers.pdf",
+  "try_it": "sh deploy/local/demo.sh stopped",
+  "sponsors": {
+    "zetaris": "Evidence store: ari writes every observation as a row to a postgres db registered in Zetaris as ari_evidence, and the investigator reads them back with Lightning SQL; every cause cites row ids.",
+    "meterless": "Nightshift is the fixer's model runtime (meterless/auto, with compute receipts logged per pick); Scout Intent is implemented in Go from the published spec and signs the only contract the verifier accepts.",
+    "nvidia": "The models behind Nightshift are NVIDIA cloud endpoints (build.nvidia.com); each pick's log line names the model that answered.",
+    "cursor": "Used during development as a builder and code reviewer: built the laptop demo (deploy/local/demo.sh) and the README's try it without servers section; code reviews of the engine and the deploy script found two real bugs, both fixed (an empty Nightshift token in deploy/recreate.sh, and ari status reporting a failed undo as undone); scanned the full git history for secrets with gitleaks."
+  },
+  "details": "docs/submission.md"
+}

@@ -18,6 +18,8 @@ built for the Open Agent Hackathon 2026, track 03 (reasoning architecture). see 
 * Zetaris: the evidence store; ari writes rows to a postgres db registered in Zetaris as `ari_evidence`, and the investigator reads them back with Lightning SQL
 * Meterless Scout Intent: implemented in go from the published spec (`internal/ari/scout.go`): intent registry from the catalogue, guard, route, HMAC signed execution contracts with a 5 minute TTL, verified at the verifier's boundary
 * Meterless Nightshift: the model runtime the fixer calls (OpenAI compatible); the rule fixer runs when no model is set
+* NVIDIA: the models behind Nightshift are NVIDIA's cloud endpoints (build.nvidia.com); each pick's log line names the one that answered
+* Cursor: used during development as a builder and code reviewer: it built the laptop demo (`deploy/local/demo.sh`), reviewed the engine and the deploy script (two bugs found and fixed), and scanned the git history for secrets; details in [docs/submission.md](docs/submission.md)
 * go: one binary, nothing to install on the offline machine
 
 ## visible by design

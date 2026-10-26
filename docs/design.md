@@ -101,18 +101,18 @@ each step ends with a done test it can pass by itself.
 * [x] `[poc]` verifier loop with a rule based fixer and the toy target, no Zetaris or Nightshift; test: a broken target is fixed, a forced done test failure is undone and escalated (2026-10-22). acceptance tests 1 to 3 pass in `internal/ari`; still open until the stack is wired: Zetaris rows as evidence
 * [x] `[ari]` model fixer over an OpenAI compatible endpoint (Nightshift in the product); bad json, no pick or an unreachable model escalates with nothing run; model words only on `[ ARI : nightshift ]` lines; tested against a fake endpoint (2026-10-23)
 * [x] `[env]` install Zetaris (`./verify.sh` passes, 2026-10-23) and Nightshift (open) (a local lane answers); then cut the network and repeat both checks; if either fails offline, rethink the air gap claim (2026-10-22)
-* [ ] `[env]` reach Nightshift and Zetaris from a container on an `--internal` network (2026-10-22)
-* [ ] `[ari]` the container image: debian slim, tools, non root, read only root, the toy target; test: the target runs and a write outside the data folder fails (2026-10-23)
+* [ ] `[env]` reach Nightshift and Zetaris from a container on an `--internal` network (2026-10-22); dropped: the air gap is the systemd unit's `IPAddressDeny=any` instead
+* [ ] `[ari]` the container image: debian slim, tools, non root, read only root, the toy target; test: the target runs and a write outside the data folder fails (2026-10-23); dropped: the systemd unit runs ari as a non root user with `ProtectSystem=strict`
 * [x] `[ari]` preflight with the no route out check, fail closed, and the banner; test: it refuses to start with the internet reachable (2026-10-23)
 * [x] `[ari]` explorer, baseline, threshold and the evidence db registered in Zetaris; test: a planted fault yields a finding and clean cycles do not (2026-10-23)
 * [x] `[ari]` investigator with `run_sql` through Zetaris; test: a finding gets a cause that cites real rows (2026-10-24)
 * [x] `[ari]` fixer with Scout Intent and the catalogue (Scout in go from the spec, signed contracts verified by the verifier; 10 planted decisions in `TestScoutPlantedFaults`, 2026-10-23; model pick on real faults still open); test: on 10 planted faults it picks the right entry or escalates, with a rule based match as the fallback; this is the engine's feature test (2026-10-24)
 * [x] `[ari]` verifier on the real stack: gate, apply, done test, undo, one retry, escalate; test: an entry with no undo is rejected, and a repair whose done test is forced to fail is undone and retried once (2026-10-25)
 * [x] `[ari]` reporter and `ari report` (2026-10-25)
-* [ ] `[cli]` `ari status`, `ari watch`, `ari stop`, `--cycles N` done (2026-10-23); sample mode open (2026-10-25)
+* [x] `[cli]` `ari status`, `ari watch`, `ari stop`, `--cycles N` done (2026-10-23); sample mode: `deploy/local/demo.sh` (2026-10-26)
 * [x] `[repo]` one setup command (`deploy/vm/setup.sh`), readme, config example (`deploy/vm/ari.conf.example`, as `.env.example` is blocked here), sample runs, fresh clone builds and passes (2026-10-23)
-* [ ] `[demo]` demo script run end to end many times, terminal recordings, deck and sponsor explanation done (2026-10-23); narrated video open
-* [ ] `[submit]` declare pre existing components, check for committed secrets, submit on HackOS (2026-10-27)
+* [x] `[demo]` demo script run end to end many times, terminal recordings, deck and sponsor explanation done (2026-10-23); demo video with titles, recorded live (2026-10-26)
+* [ ] `[submit]` declare pre existing components and check for committed secrets, done (2026-10-26); submit on HackOS (2026-10-27)
 
 ## acceptance tests
 
@@ -145,15 +145,15 @@ assumptions made while building, to confirm:
 
 one submission per team on HackOS, sent by the primary contact; it can be updated until 2026-10-27 23:45 utc. the team roster locks when the first submission is created. source: HackOS resources, "Submission Form Preview" and "Cursor: Sponsor Overview".
 
-* [ ] project name and description: one sentence plus a short paragraph saying who it is for, what it does and what it produces
-* [ ] track: reasoning architecture, named the same in the readme, deck and video
+* [x] project name and description: one sentence plus a short paragraph saying who it is for, what it does and what it produces
+* [x] track: reasoning architecture, named the same in the readme, deck and video
 * [ ] team members: full name, HackOS email, github username and role for each, one primary contact; agree the prize split
 * [ ] public github repo: all source, readme with setup, usage and dependencies, no committed secrets; recommended: one entry point, at least three sample inputs with their real outputs, logs or traces, `.env.example`, `SAMPLE_MODE=true`
-* [ ] demo video, 1 to 4 minutes: the problem and user, the solution, a real run, agents interacting or retrying, key features, how Zetaris and Meterless are integrated; viewable by anyone with the link; no secrets on screen
-* [ ] slide deck covering eight points: problem and target users, solution, agent workflow or architecture, technical stack, how Zetaris and Meterless were used, what was unique about the sponsor use, product visuals, future enhancements
-* [ ] sponsor explanation: Zetaris and Meterless (how each is integrated and its role), Cursor (how it was used during development), NVIDIA (where it contributes, or why it does not), then what was unique
-* [ ] `metadata.json`: the Cursor sponsor folder asks for Cursor usage to be described in it; its format is not published yet
-* [ ] pre existing components declared: this design and the earlier small model test
+* [x] demo video, 1 to 4 minutes: the problem and user, the solution, a real run, agents interacting or retrying, key features, how Zetaris and Meterless are integrated; viewable by anyone with the link; no secrets on screen
+* [x] slide deck covering eight points: problem and target users, solution, agent workflow or architecture, technical stack, how Zetaris and Meterless were used, what was unique about the sponsor use, product visuals, future enhancements
+* [x] sponsor explanation: Zetaris and Meterless (how each is integrated and its role), Cursor (how it was used during development), NVIDIA (where it contributes, or why it does not), then what was unique
+* [x] `metadata.json`: the Cursor sponsor folder asks for Cursor usage to be described in it and in the readme; no format is published, so it holds the project, track and each sponsor's role
+* [x] pre existing components declared: this design and the earlier small model test
 * [ ] final checks: repo is public and runs from a fresh clone, no keys committed, submitted well before the deadline
 
 ## limits and risks

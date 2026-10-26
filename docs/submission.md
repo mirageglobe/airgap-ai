@@ -56,7 +56,7 @@ footage: `samples/casts/*.cast` are terminal recordings of the three runs with r
 ## before submitting
 
 * [ ] repo public (owner's call), licence chosen
-* [ ] fresh clone: `go test ./...` passes; setup.sh on a clean server
-* [ ] no committed secrets (`git log -p | grep -iE "password|token|key"` reviewed)
-* [ ] `metadata.json` once its format is published
+* [x] fresh clone: `go test ./...` passes; setup.sh on a clean server (2026-10-26)
+* [x] no committed secrets (`git log -p | grep -iE "password|token|key"` reviewed)
+* [x] `metadata.json` (no format published; holds the project, track and each sponsor's role)
 * [ ] team roster final before the first submission
