@@ -49,6 +49,7 @@ needs go 1.27. no Zetaris, no model, no VM:
 ```sh
 go test ./...                                 # acceptance tests; Zetaris is faked (~1 min)
 sh deploy/local/demo.sh stopped               # three scenarios on a laptop (no Zetaris, no model)
+sh deploy/local/demo.sh play                  # ari runs until Ctrl+C; break toyd yourself
 asciinema play samples/casts/stopped.cast     # terminal recording of a real run
 go run ./cmd/ari report -data samples/badfix # read a recorded data folder
 ```

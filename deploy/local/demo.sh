@@ -5,12 +5,14 @@
 #   deploy/local/demo.sh stopped   # toyd killed: restarted and verified
 #   deploy/local/demo.sh badfix    # config and .good corrupted: undo, retry, escalate
 #   deploy/local/demo.sh leak      # memory leak: no catalogue entry, escalate
+#   deploy/local/demo.sh play      # no fault: ari runs until Ctrl+C, you break toyd yourself
 set -eu
 
-SCENARIO=${1:?usage: deploy/local/demo.sh stopped|badfix|leak}
+SCENARIO=${1:?usage: deploy/local/demo.sh stopped|badfix|leak|play}
 case "$SCENARIO" in
 stopped|badfix|leak) ;;
-*) echo "usage: deploy/local/demo.sh stopped|badfix|leak" >&2; exit 2 ;;
+play) CYCLES=0 ;;
+*) echo "usage: deploy/local/demo.sh stopped|badfix|leak|play" >&2; exit 2 ;;
 esac
 
 ROOT=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
@@ -33,6 +35,7 @@ cleanup() {
 	rm -rf "$WORK"
 }
 trap cleanup EXIT
+trap 'exit 130' INT TERM
 
 echo "building ari and toyd into $BIN"
 go build -o "$BIN/ari" ./cmd/ari
@@ -54,8 +57,13 @@ inject() {
 	leak) kill -USR1 "$(cat "$T/toyd.pid")" ;;
 	esac
 }
-inject &
-INJECT=$!
+if [ "$SCENARIO" = play ]; then
+	echo "toyd runs in $T (pid in toyd.pid, config toyd.conf, backup toyd.conf.good)"
+	echo "break it however you like from another terminal; $BIN/ari status -data $D shows the state; Ctrl+C stops"
+else
+	inject &
+	INJECT=$!
+fi
 
 echo "skipping air gap preflight (laptop run; use the VM demo for the real check)"
 rc=0
