@@ -40,17 +40,17 @@ built for the Open Agent Hackathon 2026, track 03 (reasoning architecture). see 
 * `catalogue/toyd.json`: the approved repairs, each with a precondition, done test and undo
 * `deploy/vm`: server setup, the systemd unit, login banner and the demo script
 
-## samples
+## try it without servers
 
-[`samples/`](samples/README.md) holds real recorded runs of the three scenarios; `go run ./cmd/ari report -data samples/badfix` reads one with nothing else installed.
-
-## run the tests
-
-needs go 1.27. the acceptance tests in docs/design.md take about a minute; Zetaris is faked.
+needs go 1.27. no Zetaris, no model, no VM:
 
 ```sh
-go test ./...
+go test ./...                                 # acceptance tests; Zetaris is faked (~1 min)
+asciinema play samples/casts/stopped.cast     # terminal recording of a real run
+go run ./cmd/ari report -data samples/badfix # read a recorded data folder
 ```
+
+[`samples/`](samples/README.md) holds the full outputs for all three scenarios (stopped, badfix, leak), including casts and Nightshift/model runs.
 
 ## run it on a server
 

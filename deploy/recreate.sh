@@ -23,7 +23,7 @@ GO_VERSION=1.27.3
 GO_SHA256=65efbc80fdc1fa2cd2631cad5b481777a68e8725f34e89f50fc6ac714e379b40
 NS_DEB=meterless-runtime_1.5.1-1_arm64.deb
 NS_URL=https://meterless.ai/Nightshift/DGX
-SSH="ssh -i $KEY -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10"
+SSH="ssh -i $KEY -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=10"
 
 wait_ssh() {
 	i=0
@@ -59,6 +59,7 @@ nightshift() {
 
 ari() {
 	ns_ip=${1:?usage: deploy/recreate.sh ari NIGHTSHIFT_IP}
+	[ -f "$ZETARIS_ZIP" ] || { echo "missing ZETARIS_ZIP: $ZETARIS_ZIP" >&2; exit 1; }
 	key=$(vultr-cli ssh-key list -o json | python3 -c "import json,sys; print([k['id'] for k in json.load(sys.stdin)['ssh_keys'] if k['name']=='ari-vultr'][0])")
 	fw=$(vultr-cli firewall group list -o json | python3 -c "import json,sys; print([g['id'] for g in json.load(sys.stdin)['firewall_groups'] if g['description']=='ari ssh only'][0])")
 	id=$(vultr-cli instance create -r $VULTR_REGION -p $VULTR_PLAN --os $VULTR_OS -l ari --host ari -s "$key" --firewall-group "$fw" -o json |
@@ -108,7 +109,8 @@ ari() {
 	$SSH "root@$ip" "echo NIGHTSHIFT_HOST=ubuntu@$ns_ip > /etc/ari/nightshift-tunnel.conf
 		install -m 644 /opt/ari/src/deploy/vm/nightshift-tunnel.service /etc/systemd/system/
 		systemctl daemon-reload && systemctl enable --now nightshift-tunnel >/dev/null 2>&1"
-	$SSH "ubuntu@$ns_ip" 'cat /var/lib/meterless/proxy-token' | $SSH "root@$ip" 'read -r T; sed -i "/^METERLESS_/d" /etc/ari/ari.conf
+	$SSH "ubuntu@$ns_ip" 'cat /var/lib/meterless/proxy-token' | $SSH "root@$ip" 'T=$(cat); [ -n "$T" ] || { echo "empty nightshift token" >&2; exit 1; }
+		sed -i "/^METERLESS_/d" /etc/ari/ari.conf
 		printf "METERLESS_BASE_URL=http://127.0.0.1:8088/v1\nMETERLESS_RUNTIME_TOKEN=%s\nMETERLESS_MODEL=meterless/auto\n" "$T" >> /etc/ari/ari.conf'
 	$SSH "root@$ip" "runuser -u ari -- sh -c 'cd /var/lib/ari/target && nohup /opt/ari/bin/toyd -config toyd.conf -pidfile toyd.pid >>toyd.log 2>&1 &'
 		systemctl start ari; sleep 20; ari status -data /var/lib/ari/data"
