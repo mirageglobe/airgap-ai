@@ -396,6 +396,7 @@ func (e *Engine) handle(symptom string, rows []int) {
 			return
 		case fixUndoFailed:
 			e.escalate(f, name+" undo failed, target may be half changed")
+			e.lastFix.Status = "undo failed, escalated"
 			return
 		}
 	}

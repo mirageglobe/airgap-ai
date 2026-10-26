@@ -220,6 +220,13 @@ func TestUndoFailureEscalates(t *testing.T) {
 	if n := r.execCount("apply"); n != 1 {
 		t.Errorf("apply ran %d times after a failed undo, want 1", n)
 	}
+	st, err := ReadState(r.data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if st.LastFix == nil || st.LastFix.Status != "undo failed, escalated" {
+		t.Fatalf("last_fix = %+v, want status %q", st.LastFix, "undo failed, escalated")
+	}
 }
 
 // A pid owned by another user (EPERM) is alive, not missing.
