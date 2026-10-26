@@ -18,7 +18,7 @@ track: 03, reasoning architecture.
 
 **Meterless Nightshift** is the fixer's model provider. The headless Nightshift runtime (`meterlessd`) runs on a small arm64 server; ari asks it for `meterless/auto` and Nightshift routes each pick to one of NVIDIA's cloud models. A restricted ssh tunnel makes it answer on the ari server's own `127.0.0.1:8088`, so the ari process itself only ever reaches localhost; the model call is the one channel that leaves, and only through Nightshift. ari sends OpenAI compatible requests with the runtime's real token and Nightshift's `meterless-app` and `meterless-scope` headers, and `log.jsonl` records, for every pick, the model Nightshift routed to and its compute receipt id. The model only picks from the catalogue with a one line reason, tagged `[ ARI : nightshift ]`. All three scenarios pass with it (`samples/nightshift/`); in one leak run the model picked the wrong repair and Scout refused it. We tried to pin a Nemotron model, but Nightshift binds each app to its routing profile, so the requested model is recorded and not forced.
 
-**Cursor**: (to fill: how Cursor was used during development.)
+**Cursor**: we used the Cursor agent CLI during development as a builder and a reviewer. It built `deploy/local/demo.sh`, the laptop demo that runs all three scenarios with no server, Zetaris, model or root, so anyone can try ari in a minute; and it wrote the README's "try it without servers" section. As a reviewer it found two real bugs we then fixed: in `deploy/recreate.sh`, a failed token copy could leave Nightshift's token empty in ari's config (now it stops with an error); and in the engine, `ari status` reported a failed undo as "undone", telling the operator the server was safe when it might be half changed (now it says "undo failed", with a test). It also scanned the full git history for secrets with gitleaks and manual checks and found no keys or tokens. We checked every finding before acting on it and left out the ones that did not hold.
 
 **NVIDIA**: the models behind Nightshift are NVIDIA's cloud endpoints (build.nvidia.com), set up with an NVIDIA API key in Nightshift's key store; which one answered is in each pick's log line. A local Nemotron did not fit next to Zetaris on the hardware available.
 
@@ -33,7 +33,7 @@ track: 03, reasoning architecture.
 5. how Zetaris and Meterless were used: see sponsor explanation
 6. what was unique about the sponsor use: Zetaris as the source of truth for the agent's reasoning, not a dashboard; Scout contracts as the only key to act
 7. product visuals: feed during a fix, the undo and escalation, `ari report`, `ari status`, the login banner, env.md preflight
-8. future enhancements: more catalogue entries per service; the model wording reports; H-MEM for incidents across runs; signed catalogues
+8. future enhancements: more catalogue entries per service; the model wording reports; H-MEM for incidents across runs; signed catalogues; a done test that checks the symptom cleared, not only health
 
 ## video, about three minutes
 
