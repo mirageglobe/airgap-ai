@@ -199,12 +199,22 @@ func TestUndoFailureEscalates(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	undo := `"cp \"{{.Dir}}/toyd.conf.pre\" \"{{.Dir}}/toyd.conf\""`
-	if !strings.Contains(string(b), undo) {
-		t.Fatal("restore-config undo not found in catalogue")
+	var es []Entry
+	if err := json.Unmarshal(b, &es); err != nil {
+		t.Fatal(err)
 	}
+	found := false
+	for i := range es {
+		if es[i].Name == "restore-config" {
+			es[i].Undo, found = "exit 3", true
+		}
+	}
+	if !found {
+		t.Fatal("restore-config not found in catalogue")
+	}
+	b, _ = json.Marshal(es)
 	path := filepath.Join(t.TempDir(), "cat.json")
-	writeFile(t, path, []byte(strings.Replace(string(b), undo, `"exit 3"`, 1)))
+	writeFile(t, path, b)
 	if r.cat, err = LoadCatalogue(path); err != nil {
 		t.Fatal(err)
 	}

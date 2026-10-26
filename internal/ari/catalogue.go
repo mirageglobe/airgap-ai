@@ -1,6 +1,7 @@
 package ari
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -32,7 +33,10 @@ func LoadCatalogue(path string) (*Catalogue, error) {
 		return nil, err
 	}
 	var es []Entry
-	if err := json.Unmarshal(b, &es); err != nil {
+	// A misspelled key would silently drop that step, e.g. the precondition gate.
+	dec := json.NewDecoder(bytes.NewReader(b))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&es); err != nil {
 		return nil, fmt.Errorf("catalogue: %w", err)
 	}
 	c := &Catalogue{entries: map[string]Entry{}}

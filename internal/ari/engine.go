@@ -202,6 +202,9 @@ func (e *Engine) Close() error {
 // before the next cycle.
 func (e *Engine) Run() error {
 	stop := filepath.Join(e.cfg.DataDir, StopFile)
+	if s, err := ReadState(e.cfg.DataDir); err == nil && s.State == "running" && s.PID != os.Getpid() && alive(s.PID) {
+		return fmt.Errorf("another ari (pid %d, run %s) is running with %s", s.PID, s.Run, e.cfg.DataDir)
+	}
 	if e.stopRequested() {
 		e.say("not starting: stop flag %s is set; remove it to let ari start", stop)
 		e.writeState("stopped")
@@ -503,7 +506,8 @@ func (e *Engine) doneTest(entry Entry) bool {
 	within, _ := time.ParseDuration(entry.Within)
 	deadline := time.Now().Add(within)
 	for {
-		if e.healthOK() {
+		// Health alone could be anything on the port; toyd itself must be up.
+		if _, alive := e.process(); alive && e.healthOK() {
 			return true
 		}
 		if time.Now().After(deadline) {
@@ -662,7 +666,9 @@ func (e *Engine) say(format string, args ...any) {
 }
 
 func (e *Engine) sayAs(tag, format string, args ...any) {
-	line := fmt.Sprintf("%s [ %s ] %s\n", time.Now().UTC().Format(time.RFC3339), tag, fmt.Sprintf(format, args...))
+	// One event, one line: text from outside (error bodies) cannot start lines of its own.
+	msg := strings.NewReplacer("\r", " ", "\n", " ").Replace(fmt.Sprintf(format, args...))
+	line := fmt.Sprintf("%s [ %s ] %s\n", time.Now().UTC().Format(time.RFC3339), tag, msg)
 	if _, err := io.WriteString(e.feed, line); err != nil && e.err == nil {
 		e.err = err
 	}

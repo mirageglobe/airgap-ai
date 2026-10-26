@@ -6,17 +6,17 @@
     "apply": "nohup \"{{.Toyd}}\" -config \"{{.Dir}}/toyd.conf\" -pidfile \"{{.Dir}}/toyd.pid\" >>\"{{.Dir}}/toyd.log\" 2>&1 &",
     "done_test": "health_ok",
     "within": "10s",
-    "undo": "kill $(cat \"{{.Dir}}/toyd.pid\") 2>/dev/null || true",
+    "undo": "p=$(cat \"{{.Dir}}/toyd.pid\" 2>/dev/null); case \"$p\" in \"\"|*[!0-9]*|0|1) exit 0 ;; esac; kill \"$p\" 2>/dev/null || true",
     "touches": ["toyd.pid", "toyd.log"]
   },
   {
     "name": "restore-config",
     "symptom": "health_failing",
     "precondition": "test -f \"{{.Dir}}/toyd.conf.good\"",
-    "apply": "cp \"{{.Dir}}/toyd.conf\" \"{{.Dir}}/toyd.conf.pre\" && cp \"{{.Dir}}/toyd.conf.good\" \"{{.Dir}}/toyd.conf\"",
+    "apply": "rm -f \"{{.Dir}}/toyd.conf.pre\" \"{{.Dir}}/toyd.conf.absent\" && if [ -e \"{{.Dir}}/toyd.conf\" ]; then cp \"{{.Dir}}/toyd.conf\" \"{{.Dir}}/toyd.conf.pre\"; else touch \"{{.Dir}}/toyd.conf.absent\"; fi && cp \"{{.Dir}}/toyd.conf.good\" \"{{.Dir}}/toyd.conf\"",
     "done_test": "health_ok",
     "within": "10s",
-    "undo": "cp \"{{.Dir}}/toyd.conf.pre\" \"{{.Dir}}/toyd.conf\"",
-    "touches": ["toyd.conf", "toyd.conf.pre"]
+    "undo": "if [ -f \"{{.Dir}}/toyd.conf.pre\" ]; then cp \"{{.Dir}}/toyd.conf.pre\" \"{{.Dir}}/toyd.conf\"; elif [ -f \"{{.Dir}}/toyd.conf.absent\" ]; then rm -f \"{{.Dir}}/toyd.conf\"; fi",
+    "touches": ["toyd.conf", "toyd.conf.pre", "toyd.conf.absent"]
   }
 ]
