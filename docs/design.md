@@ -4,7 +4,7 @@ status: running on a Debian 13 server with Zetaris in the loop; acceptance tests
 
 ## pitch
 
-a small team of local agents that look after a machine with no internet, find what is broken, and fix it from a short list of approved repairs. it is safe because it is not connected: nothing leaves the machine, and the model runs locally. it works in the open: anyone who logs in sees it, what it is doing and what it has already done. when someone logs in, it greets them and reports.
+a small team of local agents that look after a machine with no internet, find what is broken, and fix it from a short list of approved repairs. it is safe because ari itself is not connected: it proves it has no route out before it starts, and the model is optional. rules alone handle the catalogue fully offline, a local model can run behind the air gap, and Meterless Nightshift is reached through one tunnel where a site allows it. it works in the open: anyone who logs in sees it, what it is doing and what it has already done. when someone logs in, it greets them and reports.
 
 ## hackathon fit
 

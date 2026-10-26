@@ -34,6 +34,16 @@ built for the Open Agent Hackathon 2026, track 03 (reasoning architecture). see 
 
 `ari run` starts with a preflight and refuses to start if anything fails: the data folder is writable, Zetaris answers, the model answers if one is set, and there is no route out (1.1.1.1:443, 8.8.8.8:53 and 9.9.9.9:443 must not answer). on the server the systemd unit enforces it with `IPAddressDeny=any` and `IPAddressAllow=localhost`, so ari and everything it starts reach only the machine itself. results are written to `env.md`.
 
+## model modes
+
+the model only picks from the catalogue, so the safety never depends on it. the fixer runs in one of three modes:
+
+* rules only: no model at all, fully air gapped; all three scenarios pass (`samples/stopped`, `samples/badfix`, `samples/leak`)
+* a local model behind the air gap: any OpenAI compatible endpoint on the machine (`-model-url`); tested with gemma4 e2b on Ollama on the server (`samples/model/`)
+* Meterless Nightshift: in the demo ari reaches it through one restricted ssh tunnel on localhost, and Nightshift routes each pick to NVIDIA cloud models; this is the one call that leaves the machine. the Nightshift DGX runtime also ships packages for serving models locally on an NVIDIA GPU, which would keep this mode inside the air gap; we did not have the hardware to test that
+
+in every mode Scout Intent signs each action on the machine, offline, and the verifier accepts nothing else.
+
 ## layout
 
 * `cmd/ari`: `ari run|status|watch|stop|report`
