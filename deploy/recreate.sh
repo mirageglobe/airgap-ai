@@ -103,7 +103,8 @@ ari() {
 	echo "wiring the Nightshift tunnel"
 	pub=$($SSH "root@$ip" "test -f /root/.ssh/nightshift_tunnel || ssh-keygen -q -t ed25519 -N '' -C ari-nightshift-tunnel -f /root/.ssh/nightshift_tunnel; cat /root/.ssh/nightshift_tunnel.pub")
 	$SSH "ubuntu@$ns_ip" "grep -q ari-nightshift-tunnel ~/.ssh/authorized_keys || echo 'restrict,port-forwarding,permitopen=\"127.0.0.1:8088\" $pub' >> ~/.ssh/authorized_keys"
-	aws ec2 authorize-security-group-ingress --group-name ari-nightshift --protocol tcp --port 22 --cidr "$ip/32" 2>/dev/null || true
+	out=$(aws ec2 authorize-security-group-ingress --group-name ari-nightshift --protocol tcp --port 22 --cidr "$ip/32" 2>&1) ||
+		case $out in *Duplicate*) ;; *) echo "$out" >&2; exit 1 ;; esac
 	$SSH "root@$ip" "echo NIGHTSHIFT_HOST=ubuntu@$ns_ip > /etc/ari/nightshift-tunnel.conf
 		install -m 644 /opt/ari/src/deploy/vm/nightshift-tunnel.service /etc/systemd/system/
 		systemctl daemon-reload && systemctl enable --now nightshift-tunnel >/dev/null 2>&1"
