@@ -2,6 +2,22 @@
 
 working text for the HackOS submission, the deck and the video. keep it true to what runs; update the status lines as things land.
 
+## fill the form in order
+
+first: make this repo public (Settings, Danger Zone, Change visibility) and confirm the team roster; it locks when the submission is created. submissions close 2026-10-27 23:45 UTC; the team leader submits and can update until then.
+
+| form field | what to put |
+|---|---|
+| project name and description | [name and description](#name-and-description): the bold line, then the paragraph |
+| track | Reasoning Architecture |
+| team members | each member's name, HackOS email, GitHub username and role; one primary contact |
+| GitHub repository URL | https://github.com/mirageglobe/airgap-ai |
+| demo video | upload [ari-demo.mp4](ari-demo.mp4) (3:04); if the form wants a link, use one anyone can open without signing in |
+| slide deck | upload [ari-local-agents-for-offline-servers.pdf](ari-local-agents-for-offline-servers.pdf) |
+| sponsor technology: Zetaris, Meterless, Cursor, NVIDIA, what was unique | [sponsor explanation](#sponsor-explanation): one paragraph per field |
+| pre existing components | [pre existing work to declare](#pre-existing-work-to-declare) |
+| Colab links | none, ari does not run in Colab |
+
 ## name and description
 
 **ari**: local agents that keep an offline server healthy.
